@@ -1,0 +1,11 @@
+# MongoDB 설정
+MONGODB_URL = "mongodb+srv://mingyu4796:qwert12345@cluster0.nnr0q.mongodb.net/"
+DATABASE_NAME = "Code_Reading"
+USERS_COLLECTION = "User_Info"
+SUBMISSIONS_COLLECTION = "Submissions"
+PROBLEMS_COLLECTION = "Question_info"
+
+# JWT 설정
+SECRET_KEY = "Computer_Science_Education_2025_Secret"  # 실제 환경에서는 환경변수로 관리
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60

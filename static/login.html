@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 답안 제출 시스템 - 로그인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .demo-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .demo-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .demo-info p {
+            color: #424242;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>학생 답안 제출 시스템</h1>
+            <p>로그인하여 문제를 확인하고 답안을 제출하세요</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="userId">학번</label>
+                <input type="text" id="userId" name="userId" required placeholder="학번을 입력하세요 (예: 250100)">
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required placeholder="비밀번호를 입력하세요">
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">로그인</button>
+        </form>
+
+        <div class="demo-info">
+            <h3>테스트 계정 예시</h3>
+            <p><strong>학번:</strong> 250100, <strong>비밀번호:</strong> 250100</p>
+            <p><strong>학번:</strong> 250101, <strong>비밀번호:</strong> 250101</p>
+            <p><strong>학번:</strong> 250102, <strong>비밀번호:</strong> 250102</p>
+            <p><small>비밀번호는 학번과 동일합니다</small></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+            const form = document.getElementById('loginForm');
+            
+            // 로딩 상태 설정
+            form.classList.add('loading');
+            loginBtn.textContent = '로그인 중...';
+            errorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 토큰 저장
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user_name', data.user_name);
+                    
+                    // 문제 목록 페이지로 이동
+                    window.location.href = '/problems';
+                } else {
+                    // 에러 메시지 표시
+                    errorMessage.textContent = data.detail || '로그인에 실패했습니다';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.';
+                errorMessage.style.display = 'block';
+            } finally {
+                // 로딩 상태 해제
+                form.classList.remove('loading');
+                loginBtn.textContent = '로그인';
+            }
+        });
+
+        // 이미 로그인된 경우 문제 페이지로 이동
+        if (localStorage.getItem('access_token')) {
+            window.location.href = '/problems';
+        }
+    </script>
+</body>
+</html>
