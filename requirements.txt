@@ -1,8 +1,7 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-motor==3.6.0
-pymongo==4.8.0
-python-multipart==0.0.6
-PyJWT==2.8.0
-bcrypt==4.1.2
-python-jose[cryptography]==3.3.0
+fastapi
+uvicorn[standard]
+motor
+python-multipart
+PyJWT
+bcrypt
+python-jose[cryptography]
