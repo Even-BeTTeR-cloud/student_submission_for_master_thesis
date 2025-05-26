@@ -30,11 +30,12 @@
       .header-content {
         width: 100%;
         margin: 0;
-        padding: 0 clamp(20px, 4vw, 40px);
+        padding: clamp(4px, 1vw, 8px) clamp(16px, 3vw, 24px);
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
+        min-height: 50px;
       }
 
       .header h1 {
@@ -43,15 +44,17 @@
         left: 50%;
         transform: translateX(-50%);
         margin: 0;
+        padding: 0 12px;
       }
 
       .nav-buttons {
         display: flex;
-        gap: clamp(6px, 1.5vw, 10px);
+        gap: clamp(6px, 1.5vw, 8px);
         position: absolute;
-        right: clamp(20px, 4vw, 40px);
+        right: clamp(16px, 3vw, 24px);
         top: 50%;
         transform: translateY(-50%);
+        padding: clamp(2px, 0.5vw, 4px) 0;
       }
 
       .nav-btn {
@@ -61,11 +64,17 @@
         padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px);
         border-radius: 5px;
         cursor: pointer;
-        transition: background 0.3s;
+        transition: background 0.3s, transform 0.2s;
         text-decoration: none;
         display: inline-block;
         font-size: clamp(12px, 2.5vw, 14px);
         white-space: nowrap;
+        margin: 1px;
+      }
+
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
       }
 
       .nav-btn:hover {
