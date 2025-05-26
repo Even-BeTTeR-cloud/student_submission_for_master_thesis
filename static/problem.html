@@ -21,38 +21,44 @@
       .header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 20px 0;
+        padding: clamp(15px, 3vw, 20px) 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
       }
 
       .header-content {
-        max-width: 1200px;
+        max-width: 98vw;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 0 clamp(8px, 2vw, 20px);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
       }
 
       .header h1 {
-        font-size: 24px;
+        font-size: clamp(18px, 4vw, 24px);
+        flex-shrink: 0;
       }
 
       .nav-buttons {
         display: flex;
-        gap: 10px;
+        gap: clamp(6px, 1.5vw, 10px);
+        flex-shrink: 0;
       }
 
       .nav-btn {
         background: rgba(255, 255, 255, 0.2);
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px);
         border-radius: 5px;
         cursor: pointer;
         transition: background 0.3s;
         text-decoration: none;
         display: inline-block;
+        font-size: clamp(12px, 2.5vw, 14px);
+        white-space: nowrap;
       }
 
       .nav-btn:hover {
@@ -92,13 +98,14 @@
         flex-shrink: 0;
       }
 
-      .problem-section .problem-description {
-        margin-bottom: 6px !important;
+      .problem-section .problem-code {
+        margin-top: 8px !important;
+        margin-bottom: 0 !important;
+        overflow: visible !important;
       }
 
-      .problem-section .problem-code {
-        margin-top: 6px !important;
-        margin-bottom: 0 !important;
+      .problem-section .problem-description {
+        margin-bottom: 4px !important;
       }
 
       .answer-section {
