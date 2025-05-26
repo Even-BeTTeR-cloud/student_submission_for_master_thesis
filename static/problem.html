@@ -81,6 +81,26 @@
         flex-direction: column;
       }
 
+      .problem-section * {
+        margin: 0 !important;
+      }
+
+      .problem-section .problem-header {
+        margin-bottom: 8px !important;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+
+      .problem-section .problem-description {
+        margin-bottom: 6px !important;
+      }
+
+      .problem-section .problem-code {
+        margin-top: 6px !important;
+        margin-bottom: 0 !important;
+      }
+
       .answer-section {
         background: white;
         border-radius: 6px;
@@ -530,7 +550,7 @@
         }
       }
 
-      // 문제 표시 수정 - 설명과 코드 분리
+      // 문제 표시 수정 - 설명과 코드 분리, 여백 최소화
       function displayProblem(problem) {
         document.getElementById(
           "problemId"
@@ -540,11 +560,11 @@
           "maxScore"
         ).textContent = `최대 ${problem.max_score}점`;
 
-        // 설명과 코드를 분리해서 표시
+        // 설명과 코드를 분리해서 표시 - 여백 최소화
         const problemTextElement = document.getElementById("problemText");
 
         if (problem.description && problem.code) {
-          // 설명과 코드가 분리되어 있는 경우
+          // 설명과 코드가 분리되어 있는 경우 - 컴팩트하게 배치
           problemTextElement.innerHTML = `
                     <div class="problem-description">${problem.description}</div>
                     <div class="problem-code">
@@ -552,8 +572,8 @@
                     </div>
                 `;
         } else {
-          // 기존 content 필드 사용
-          problemTextElement.textContent = problem.content;
+          // 기존 content 필드 사용 - 여백 최소화
+          problemTextElement.innerHTML = `<div style="margin: 0; padding: 0;">${problem.content}</div>`;
         }
 
         // 페이지 제목 업데이트
