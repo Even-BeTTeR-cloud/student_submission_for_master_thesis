@@ -172,6 +172,15 @@ async def debug_get_questions():
 async def root():
     return FileResponse("static/login.html")
 
+# 튜토리얼 페이지 라우트 추가
+@app.get("/tutorial1")
+async def tutorial1_page():
+    return FileResponse("static/Tutorial1.html")
+
+@app.get("/tutorial2")
+async def tutorial2_page():
+    return FileResponse("static/Tutorial2.html")
+
 # 로그인 함수 수정 - 디버깅 정보 추가
 @app.post("/api/login")
 async def login(login_data: LoginRequest):
