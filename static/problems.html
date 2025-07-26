@@ -199,6 +199,41 @@
         font-size: 16px;
         margin-bottom: 30px;
       }
+
+      .tutorial-notice {
+        background: #e3f2fd;
+        border: 2px solid #2196f3;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .tutorial-notice h3 {
+        color: #1976d2;
+        margin-bottom: 10px;
+      }
+
+      .tutorial-notice p {
+        color: #424242;
+        margin-bottom: 15px;
+      }
+
+      .tutorial-btn {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 0 5px;
+        transition: background 0.3s;
+      }
+
+      .tutorial-btn:hover {
+        background: #1976d2;
+      }
     </style>
   </head>
   <body>
@@ -207,12 +242,19 @@
         <h1>학생 답안 제출 시스템</h1>
         <div class="user-info">
           <span class="user-name" id="userName">로딩 중...</span>
-          <button class="logout-btn" onclick="logout()">로그아웃</button>
+          <button class="logout-btn" id="logout-btn">로그아웃</button>
         </div>
       </div>
     </div>
 
     <div class="container">
+      <div id="tutorialNotice" class="tutorial-notice" style="display: none;">
+        <h3>🎓 튜토리얼을 먼저 진행해보세요!</h3>
+        <p>코드 읽기 과제가 처음이신가요? 튜토리얼을 통해 문제 풀이 방법을 익혀보세요.</p>
+        <button class="tutorial-btn" id="start-tutorial">튜토리얼 시작하기</button>
+        <button class="tutorial-btn" id="skip-tutorial">건너뛰고 문제 풀기</button>
+      </div>
+
       <h2 class="section-title">문제 목록</h2>
       <p class="section-subtitle">아래 문제들을 하나씩 해결해봐요!</p>
 
@@ -222,6 +264,11 @@
     </div>
 
     <script>
+      // 튜토리얼 완료 상태 확인
+      function checkTutorialStatus() {
+        return localStorage.getItem("tutorial_completed") === "true";
+      }
+
       // 인증 확인
       function checkAuth() {
         const token = localStorage.getItem("access_token");
@@ -240,6 +287,7 @@
       function logout() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("user_name");
+        localStorage.removeItem("tutorial_completed");
         window.location.href = "/";
       }
 
@@ -341,9 +389,9 @@
                             <div class="max-score">최대 ${
                               problem.max_score
                             }점</div>
-                            <button class="solve-btn" onclick="solveProblem('${
+                            <button class="solve-btn" data-problem-id="${
                               problem.problem_id
-                            }')">
+                            }">
                                 ${isSubmitted ? "다시 풀기" : "문제 풀기"}
                             </button>
                         </div>
@@ -369,6 +417,14 @@
                 `;
           })
           .join("");
+
+        // 문제 풀기 버튼 이벤트 리스너 추가
+        document.querySelectorAll('.solve-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const problemId = this.getAttribute('data-problem-id');
+            solveProblem(problemId);
+          });
+        });
       }
 
       // 문제 풀기
@@ -376,11 +432,33 @@
         window.location.href = `/problem/${problemId}`;
       }
 
+      // 튜토리얼 시작
+      function startTutorial() {
+        window.location.href = '/tutorial1';
+      }
+
+      // 튜토리얼 건너뛰기
+      function skipTutorial() {
+        localStorage.setItem("tutorial_completed", "true");
+        document.getElementById("tutorialNotice").style.display = "none";
+      }
+
       // 페이지 로드 시 실행
       document.addEventListener("DOMContentLoaded", function () {
-        if (checkAuth()) {
-          loadProblems();
+        if (!checkAuth()) return;
+
+        // 튜토리얼 상태 확인
+        if (!checkTutorialStatus()) {
+          document.getElementById("tutorialNotice").style.display = "block";
         }
+
+        // 이벤트 리스너 등록
+        document.getElementById("logout-btn").addEventListener("click", logout);
+        document.getElementById("start-tutorial").addEventListener("click", startTutorial);
+        document.getElementById("skip-tutorial").addEventListener("click", skipTutorial);
+
+        // 문제 목록 로드
+        loadProblems();
       });
     </script>
   </body>
