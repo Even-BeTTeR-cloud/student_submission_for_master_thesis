@@ -169,6 +169,11 @@
     </div>
 
     <script>
+      // 튜토리얼 완료 상태를 확인하는 함수
+      function checkTutorialStatus() {
+        return localStorage.getItem("tutorial_completed") === "true";
+      }
+
       document
         .getElementById("loginForm")
         .addEventListener("submit", async function (e) {
@@ -204,8 +209,14 @@
               localStorage.setItem("access_token", data.access_token);
               localStorage.setItem("user_name", data.user_name);
 
-              // 문제 목록 페이지로 이동
-              window.location.href = "/problems";
+              // 튜토리얼 완료 여부에 따라 이동
+              if (checkTutorialStatus()) {
+                // 튜토리얼 완료한 사용자는 바로 문제 목록으로
+                window.location.href = "/problems";
+              } else {
+                // 튜토리얼 미완료 사용자는 튜토리얼로
+                window.location.href = "/tutorial1";
+              }
             } else {
               // 에러 메시지 표시
               errorMessage.textContent = data.detail || "로그인에 실패했습니다";
@@ -223,9 +234,13 @@
           }
         });
 
-      // 이미 로그인된 경우 문제 페이지로 이동
+      // 이미 로그인된 경우 적절한 페이지로 이동
       if (localStorage.getItem("access_token")) {
-        window.location.href = "/problems";
+        if (checkTutorialStatus()) {
+          window.location.href = "/problems";
+        } else {
+          window.location.href = "/tutorial1";
+        }
       }
     </script>
   </body>
