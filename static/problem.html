@@ -189,18 +189,20 @@
         margin-bottom: 8px;
       }
 
+      /* problem-code 내부의 pre와 code 스타일 조정 */
       .problem-code {
         background: #ffffff;
         border: 1px solid #d1d5db;
         border-radius: 4px;
-        padding: 6px;
+        padding: 6px; /* 이 부분을 너무 줄이면 강조박스가 잘릴 수 있습니다 */
         margin: 6px 0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-        position: relative;
+        position: relative; /* highlighted-section::before를 위해 필요 */
         max-width: 100%;
         overflow: hidden;
       }
 
+      /* 기존 "코드" 라벨은 필요에 따라 유지하거나 제거 */
       .problem-code::before {
         content: "코드";
         position: absolute;
@@ -218,7 +220,7 @@
       .problem-code pre {
         margin: 0;
         background: #f8fafc;
-        padding: clamp(6px, 1.5vw, 12px);
+        padding: clamp(6px, 1.5vw, 12px); /* 안쪽 여백 추가 */
         border-radius: 4px;
         border: 1px solid #e2e8f0;
         overflow-x: auto;
@@ -227,6 +229,10 @@
         line-height: 1.4;
         color: #1e293b;
         max-width: 100%;
+        /* pre 안의 code-line들이 줄바꿈되지 않도록 설정 */
+        white-space: pre-wrap; /* 여기서 pre-wrap을 사용하면 긴 라인이 자동으로 줄바꿈됩니다. */
+                            /* 원본 코드의 줄바꿈을 유지하면서 넘칠 때만 줄바꿈하려면 pre-wrap, */
+                            /* 강제 줄바꿈 없이 한 줄로 유지하려면 pre를 사용합니다. */
       }
 
       .problem-code code {
@@ -235,8 +241,39 @@
         border: none;
         font-family: inherit;
         color: inherit;
-        white-space: pre;
+        white-space: pre; /* 백엔드에서 span 태그 안에 들어있는 각 라인의 공백을 유지합니다. */
       }
+
+      /* 강조 표시 스타일 (꾸미기 설정) */
+      .highlighted-section {
+          background: rgba(102, 126, 234, 0.1); /* 연한 파란색 배경 */
+          border: 2px dashed #667eea; /* 점선 테두리 */
+          border-radius: 8px;
+          padding: 10px; /* 안쪽 여백 */
+          margin: 5px 0; /* 위아래 여백 */
+          position: relative;
+      }
+
+      .highlighted-section::before {
+          content: "🎯 집중 구역";
+          position: absolute;
+          top: -12px; /* 상단 여백 조절 */
+          left: 15px; /* 좌측 여백 조절 */
+          background: #667eea;
+          color: white;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: bold;
+          z-index: 2; /* 다른 요소 위에 표시되도록 z-index 설정 */
+      }
+
+      .code-line { /* 각 코드 줄에 대한 기본 스타일 */
+          display: block; /* 줄바꿈 */
+          padding: 2px 0; /* 줄 간격 조절 */
+          /* 코드 라인 자체의 들여쓰기 등이 포함되어야 하므로 white-space: pre-wrap; 이나 pre는 상위 pre 태그에서만 제어하는 것이 좋습니다. */
+      }
+
 
       .problem-content pre {
         background: #f8f9fa;
@@ -429,7 +466,6 @@
     </div>
 
     <div class="container">
-      <!-- 문제 섹션 -->
       <div class="problem-section">
         <div id="loadingMessage" class="loading">문제를 불러오는 중...</div>
         <div id="errorMessage" class="error" style="display: none"></div>
@@ -445,7 +481,6 @@
         </div>
       </div>
 
-      <!-- 답안 섹션 -->
       <div class="answer-section">
         <div class="answer-header">
           <h2>답안 작성</h2>
@@ -578,7 +613,7 @@
         }
       }
 
-      // 문제 표시 수정 - 설명과 코드 분리, 여백 최소화
+      // 문제 표시 수정 - 설명과 코드 분리, 강조 표시 반영
       function displayProblem(problem) {
         document.getElementById(
           "problemId"
@@ -591,18 +626,12 @@
         // 설명과 코드를 분리해서 표시 - 여백 최소화
         const problemTextElement = document.getElementById("problemText");
 
-        if (problem.description && problem.code) {
-          // 설명과 코드가 분리되어 있는 경우 - 컴팩트하게 배치
-          problemTextElement.innerHTML = `
-                    <div class="problem-description">${problem.description}</div>
-                    <div class="problem-code">
-                        <pre><code>${problem.code}</code></pre>
-                    </div>
-                `;
-        } else {
-          // 기존 content 필드 사용 - 여백 최소화
-          problemTextElement.innerHTML = `<div style="margin: 0; padding: 0;">${problem.content}</div>`;
-        }
+        // 백엔드에서 HTML이 포함된 코드를 받으므로 innerHTML 사용
+        problemTextElement.innerHTML = `
+            <div class="problem-description">${problem.description}</div>
+            <div class="problem-code">
+                <pre><code>${problem.code}</code></pre> </div>
+        `;
 
         // 페이지 제목 업데이트
         document.title = `${problem.title} - 학생 답안 제출 시스템`;
