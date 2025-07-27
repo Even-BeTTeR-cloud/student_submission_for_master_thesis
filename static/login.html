@@ -223,10 +223,16 @@
           }
         });
 
-      // 이미 로그인된 경우 튜토리얼로 이동
-      if (localStorage.getItem("access_token")) {
-        window.location.href = "/tutorial1";
-      }
+      // 페이지 로드 시 토큰 확인 및 정리
+      document.addEventListener('DOMContentLoaded', function() {
+        // 기존 토큰이 있다면 완전히 삭제 (깨끗한 시작)
+        const existingToken = localStorage.getItem("access_token");
+        if (existingToken) {
+          console.log("기존 토큰 발견, 완전 초기화 중...");
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+      });
     </script>
   </body>
 </html>
