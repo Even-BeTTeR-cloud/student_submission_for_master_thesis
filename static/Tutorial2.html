@@ -282,7 +282,7 @@
                     <div class="answer-option" id="option-4">
                         <div class="option-number">4</div>
                         <div class="option-text">
-                            a와 b를 교환합니다.
+                            a값과 b값을 교환합니다.
                         </div>
                     </div>
                 </div>
@@ -350,6 +350,8 @@
     </div>
 
     <script>
+        console.log("📖 Tutorial2 페이지 로드됨");
+
         let selectedOption = null;
 
         function selectOption(optionNumber) {
@@ -374,22 +376,28 @@
         }
 
         function goBack() {
+            console.log("📚 Tutorial1로 돌아가기");
             window.location.href = '/tutorial1';
         }
 
         function goNext() {
-            // 답안 선택 여부와 상관없이 문제 목록으로 이동
+            console.log("📋 문제 목록으로 이동");
             window.location.href = '/problems';
         }
 
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', function() {
-            // 로그인 상태 확인
+            console.log("📖 Tutorial2 초기화 시작");
+            
+            // 로그인 상태 확인 - 토큰이 없으면 로그인 페이지로
             const token = localStorage.getItem("access_token");
             if (!token) {
+                console.log("❌ 토큰 없음, 로그인 페이지로 이동");
                 window.location.href = "/";
                 return;
             }
+
+            console.log("✅ 토큰 확인됨, Tutorial2 진행");
 
             // 이벤트 리스너 등록
             document.querySelectorAll('.answer-option').forEach((option, index) => {
@@ -398,6 +406,8 @@
 
             document.getElementById('back-btn').addEventListener('click', goBack);
             document.getElementById('next-btn').addEventListener('click', goNext);
+            
+            console.log("📖 Tutorial2 초기화 완료");
         });
     </script>
 </body>
