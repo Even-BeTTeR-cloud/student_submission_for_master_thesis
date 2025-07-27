@@ -1,227 +1,4 @@
-<!DOCTYPE html>
-<html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>문제 목록 - 학생 답안 제출 시스템</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Arial", sans-serif;
-        background-color: #f5f5f5;
-        min-height: 100vh;
-      }
-
-      .header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px 0;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .header-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .header h1 {
-        font-size: 24px;
-      }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-
-      .user-name {
-        font-size: 16px;
-      }
-
-      .logout-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background 0.3s;
-      }
-
-      .logout-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 0 20px;
-      }
-
-      .problems-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-      }
-
-      .problem-card {
-        background: white;
-        border-radius: 10px;
-        padding: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s, box-shadow 0.3s;
-        border-left: 4px solid #667eea;
-      }
-
-      .problem-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      }
-
-      .problem-header {
-        margin-bottom: 15px;
-      }
-
-      .problem-id {
-        color: #667eea;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 5px;
-      }
-
-      .problem-title {
-        font-size: 20px;
-        color: #333;
-        margin-bottom: 10px;
-      }
-
-      .problem-content {
-        color: #667eea;
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 20px;
-        font-style: italic;
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-      }
-
-      .problem-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .max-score {
-        background: #e8f5e9;
-        color: #2e7d32;
-        padding: 5px 10px;
-        border-radius: 15px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .solve-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: transform 0.3s;
-      }
-
-      .solve-btn:hover {
-        transform: translateY(-2px);
-      }
-
-      .submission-status {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 10px;
-      }
-
-      .status-badge {
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .status-submitted {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-
-      .status-not-submitted {
-        background: #fff3e0;
-        color: #f57c00;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 40px;
-        color: #666;
-      }
-
-      .error {
-        background: #ffebee;
-        color: #c62828;
-        padding: 20px;
-        border-radius: 5px;
-        margin: 20px 0;
-        border-left: 4px solid #f44336;
-      }
-
-      .section-title {
-        font-size: 28px;
-        color: #333;
-        margin-bottom: 10px;
-      }
-
-      .section-subtitle {
-        color: #666;
-        font-size: 16px;
-        margin-bottom: 30px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <div class="header-content">
-        <h1>학생 답안 제출 시스템</h1>
-        <div class="user-info">
-          <span class="user-name" id="userName">로딩 중...</span>
-          <button class="logout-btn" id="logout-btn">로그아웃</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-      <h2 class="section-title">문제 목록</h2>
-      <p class="section-subtitle">아래 문제들을 하나씩 해결해봐요!</p>
-
-      <div id="loadingMessage" class="loading">문제를 불러오는 중...</div>
-      <div id="errorMessage" class="error" style="display: none"></div>
-      <div id="problemsGrid" class="problems-grid" style="display: none"></div>
-    </div>
-
-    <script>
+<script>
       console.log("📋 Problems 페이지 로드됨");
 
       // 인증 확인
@@ -237,6 +14,20 @@
 
         document.getElementById("userName").textContent = userName || "사용자";
         console.log("✅ 토큰 확인됨, Problems 페이지 진행");
+        
+        // --- 다음 줄들은 삭제하거나 주석 처리합니다. ---
+        // try {
+        //     const userResponse = await apiCall("/api/user-status"); 
+        //     if (userResponse && userResponse.tutorial_completed === false) {
+        //         console.log("⚠️ 튜토리얼 미완료, Tutorial1 페이지로 이동");
+        //         window.location.replace("/tutorial1"); 
+        //         return false;
+        //     }
+        // } catch (error) {
+        //     console.error("❌ 사용자 상태 확인 오류:", error);
+        // }
+        // --- 여기까지 삭제하거나 주석 처리합니다. ---
+
         return true;
       }
 
@@ -420,5 +211,3 @@
         console.log("📋 Problems 페이지 초기화 완료");
       });
     </script>
-  </body>
-</html>
