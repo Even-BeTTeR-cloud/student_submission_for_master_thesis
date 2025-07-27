@@ -29,7 +29,7 @@ def serialize_doc(doc):
 # MongoDB 설정 - 올바른 컬렉션 이름으로 수정
 MONGODB_URL = "mongodb+srv://mingyu4796:qwert12345@cluster0.nnr0q.mongodb.net/"
 DATABASE_NAME = "Code_Reading"
-USERS_COLLECTION = "User_info"  # 수정: I를 소문자로 변경
+USERS_COLLECTION = "User_info"  
 SUBMISSIONS_COLLECTION = "Submission"
 PROBLEMS_COLLECTION = "Question_info"
 
@@ -148,6 +148,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
     return user
 
+# 캐시 방지 헤더를 추가하는 헬퍼 함수
+def create_no_cache_file_response(file_path: str) -> FileResponse:
+    response = FileResponse(file_path)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # 디버깅용 API 수정
 @app.get("/api/debug/user/{user_id}")
 async def debug_get_user(user_id: int):
@@ -167,41 +175,44 @@ async def debug_get_questions():
     questions = await db[PROBLEMS_COLLECTION].find({}).to_list(length=10)
     return serialize_doc(questions)
 
-# 라우트 정의
+# 라우트 정의 - 디버깅 로그 및 캐시 방지 추가
 @app.get("/")
 async def root():
-    return FileResponse("static/login.html")
+    print("🏠 [DEBUG] 루트 경로(/) 접속됨 - login.html 제공")
+    return create_no_cache_file_response("static/login.html")
 
 # 튜토리얼 페이지 라우트 추가
 @app.get("/tutorial1")
 async def tutorial1_page():
-    return FileResponse("static/Tutorial1.html")
+    print("📚 [DEBUG] Tutorial1 페이지 요청됨 - Tutorial1.html 제공")
+    return create_no_cache_file_response("static/Tutorial1.html")
 
 @app.get("/tutorial2")
 async def tutorial2_page():
-    return FileResponse("static/Tutorial2.html")
+    print("📖 [DEBUG] Tutorial2 페이지 요청됨 - Tutorial2.html 제공")
+    return create_no_cache_file_response("static/Tutorial2.html")
 
 # 로그인 함수 수정 - 디버깅 정보 추가
 @app.post("/api/login")
 async def login(login_data: LoginRequest):
-    print(f"로그인 시도: {login_data.user_id}, {login_data.password}")
+    print(f"🔐 [DEBUG] 로그인 시도: {login_data.user_id}")
     
     # ID는 정수로 변환해서 검색
     try:
         user_id_int = int(login_data.user_id)
-        print(f"변환된 ID: {user_id_int}")
+        print(f"🔢 [DEBUG] 변환된 ID: {user_id_int}")
     except ValueError:
-        print("ID 변환 실패")
+        print("❌ [DEBUG] ID 변환 실패")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="유효하지 않은 학번입니다"
         )
     
     user = await db[USERS_COLLECTION].find_one({"ID": user_id_int})
-    print(f"DB에서 찾은 사용자: {user}")
+    print(f"👤 [DEBUG] DB에서 찾은 사용자: {user}")
     
     if not user:
-        print("사용자를 찾을 수 없음")
+        print("❌ [DEBUG] 사용자를 찾을 수 없음")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="존재하지 않는 학번입니다"
@@ -209,15 +220,15 @@ async def login(login_data: LoginRequest):
     
     # 비밀번호 확인 (여러 가지 방법으로 시도)
     password_int = int(login_data.password)
-    print(f"입력된 비밀번호: {password_int}, DB PW: {user.get('PW')}")
+    print(f"🔑 [DEBUG] 입력된 비밀번호: {password_int}, DB PW: {user.get('PW')}")
     
     # 여러 조건으로 비밀번호 확인
     if (user.get("PW") == password_int or 
         user.get("PW") == str(password_int) or 
         user.get("PW") == login_data.password):
-        print("비밀번호 일치!")
+        print("✅ [DEBUG] 비밀번호 일치!")
     else:
-        print(f"비밀번호 불일치: DB={user.get('PW')}, 입력={password_int}")
+        print(f"❌ [DEBUG] 비밀번호 불일치: DB={user.get('PW')}, 입력={password_int}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="비밀번호가 잘못되었습니다"
@@ -230,13 +241,14 @@ async def login(login_data: LoginRequest):
     
     # 사용자 이름을 Hash_ID로 설정
     user_name = f"학생{user.get('Hash_ID', user['ID'])}"
-    print(f"로그인 성공: {user_name}")
+    print(f"🎉 [DEBUG] 로그인 성공: {user_name}")
     
     return {"access_token": access_token, "token_type": "bearer", "user_name": user_name}
 
 # 문제 목록 조회 수정 - 코드 표시 방식 개선
 @app.get("/api/problems")
 async def get_problems(current_user: dict = Depends(get_current_user)):
+    print(f"📋 [DEBUG] API 문제 목록 요청됨 - 사용자: {current_user.get('ID')}")
     # Question_id가 있는 기존 문제들을 조회
     problems = await db[PROBLEMS_COLLECTION].find({
         "Question_id": {"$exists": True}
@@ -260,6 +272,7 @@ async def get_problems(current_user: dict = Depends(get_current_user)):
 # 개별 문제 조회 수정 - 코드 표시 방식 개선
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, current_user: dict = Depends(get_current_user)):
+    print(f"📝 [DEBUG] API 개별 문제 요청됨 - {problem_id} - 사용자: {current_user.get('ID')}")
     # q1, q2 형태에서 숫자만 추출
     if problem_id.startswith('q'):
         try:
@@ -290,6 +303,7 @@ async def get_problem(problem_id: str, current_user: dict = Depends(get_current_
 # 답안 제출 수정 - Hash_ID 필드 추가
 @app.post("/api/submit")
 async def submit_answer(submission: SubmissionRequest, current_user: dict = Depends(get_current_user)):
+    print(f"📤 [DEBUG] 답안 제출 요청됨 - {submission.problem_id} - 사용자: {current_user.get('ID')}")
     # problem_id가 q1, q2 형태인지 확인하고 Question_id로 변환
     if submission.problem_id.startswith('q'):
         try:
@@ -326,6 +340,7 @@ async def submit_answer(submission: SubmissionRequest, current_user: dict = Depe
 # 내 제출 내역 조회 수정 - user_id 필드명 변경
 @app.get("/api/my-submissions")
 async def get_my_submissions(current_user: dict = Depends(get_current_user)):
+    print(f"📊 [DEBUG] API 제출 내역 요청됨 - 사용자: {current_user.get('ID')}")
     submissions = await db[SUBMISSIONS_COLLECTION].find(
         {"user_id": current_user["ID"]}  # ID 필드 사용
     ).to_list(length=None)
@@ -333,11 +348,13 @@ async def get_my_submissions(current_user: dict = Depends(get_current_user)):
 
 @app.get("/problems")
 async def problems_page():
-    return FileResponse("static/problems.html")
+    print("📋 [DEBUG] Problems 페이지 요청됨 - problems.html 제공")
+    return create_no_cache_file_response("static/problems.html")
 
 @app.get("/problem/{problem_id}")
 async def problem_page(problem_id: str):
-    return FileResponse("static/problem.html")
+    print(f"📝 [DEBUG] Problem 페이지 요청됨 - {problem_id} - problem.html 제공")
+    return create_no_cache_file_response("static/problem.html")
 
 # 서버 실행
 if __name__ == "__main__":
