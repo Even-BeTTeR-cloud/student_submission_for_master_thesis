@@ -1,3 +1,5 @@
+# fastapi_main.py
+
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
@@ -269,7 +271,7 @@ async def get_problems(current_user: dict = Depends(get_current_user)):
     
     return serialize_doc(converted_problems)
 
-# 개별 문제 조회 수정 - 코드 표시 방식 개선
+# 개별 문제 조회 수정 - 코드 표시 방식 개선 및 강조 표시 로직 추가
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, current_user: dict = Depends(get_current_user)):
     print(f"📝 [DEBUG] API 개별 문제 요청됨 - {problem_id} - 사용자: {current_user.get('ID')}")
@@ -287,13 +289,55 @@ async def get_problem(problem_id: str, current_user: dict = Depends(get_current_
     if not problem:
         raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다")
     
+    # --- 강조 표시 로직 추가 시작 ---
+    original_code = problem['Code']
+    highlighted_code = original_code # 기본값
+    
+    # DB에서 강조 라인 정보 가져오기
+    # .get()을 사용하여 필드가 없을 경우 None을 반환하도록 하여 오류 방지
+    highlight_start_index = problem.get('Highlight_Start_Line') 
+    highlight_end_index = problem.get('Highlight_End_Line')
+
+    if highlight_start_index is not None and highlight_end_index is not None:
+        code_lines = original_code.split('\n')
+        processed_lines = []
+        in_highlight_section = False
+
+        for i, line in enumerate(code_lines):
+            # 강조 시작 라인 처리
+            if i == highlight_start_index:
+                if not in_highlight_section: # 이미 열려있지 않은 경우에만
+                    processed_lines.append('<div class="highlighted-section">')
+                    in_highlight_section = True
+            
+            # 각 라인을 span.code-line으로 감싸기 (빈 줄 포함)
+            # HTML 특수 문자 이스케이프 (선택적: 필요하다면 html.escape() 사용)
+            processed_lines.append(f'<span class="code-line">{line}</span>')
+
+            # 강조 끝 라인 처리
+            if i == highlight_end_index:
+                if in_highlight_section: # 열려있는 경우에만
+                    processed_lines.append('</div>')
+                    in_highlight_section = False
+        
+        # 혹시 섹션이 닫히지 않고 코드가 끝났다면 강제로 닫기 (예외 상황 방지)
+        if in_highlight_section:
+            processed_lines.append('</div>')
+            
+        highlighted_code = '\n'.join(processed_lines)
+    else:
+        # 강조 정보가 없으면 각 줄을 span.code-line으로만 감싸서 반환 (코드 스타일 유지를 위해)
+        code_lines = original_code.split('\n')
+        highlighted_code = '\n'.join([f'<span class="code-line">{line}</span>' for line in code_lines])
+
+
     # 프론트엔드 형식으로 변환 - Code를 더 명확하게 분리
     converted_problem = {
         "problem_id": problem_id,
         "title": f"문제 {problem['Question_id']}",
         "description": problem['Question Description'],  # 설명만 따로
-        "code": problem['Code'],  # 코드만 따로
-        "content": f"{problem['Question Description']}\n\n{problem['Code']}",  # 전체 (호환성)
+        "code": highlighted_code, # 강조 표시된 코드를 전달
+        "content": f"{problem['Question Description']}\n\n{highlighted_code}",  # 전체 (호환성)
         "max_score": 100,
         "original_id": problem['Question_id']
     }
