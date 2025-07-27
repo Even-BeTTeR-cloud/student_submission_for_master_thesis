@@ -378,15 +378,7 @@
         }
 
         function goNext() {
-            if (!selectedOption) {
-                alert('답안을 선택해주세요!');
-                return;
-            }
-            
-            // 튜토리얼 완료 표시
-            localStorage.setItem("tutorial_completed", "true");
-            
-            // 문제 목록으로 이동
+            // 답안 선택 여부와 상관없이 문제 목록으로 이동
             window.location.href = '/problems';
         }
 
