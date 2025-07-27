@@ -236,11 +236,16 @@
         return true;
       }
 
-      // 로그아웃
+      // 로그아웃 - 히스토리 완전 초기화
       function logout() {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user_name");
-        window.location.href = "/";
+        // localStorage 완전 삭제
+        localStorage.clear();
+        
+        // 세션 스토리지도 삭제
+        sessionStorage.clear();
+        
+        // 히스토리 완전 초기화하고 로그인 페이지로 이동
+        window.location.replace("/");
       }
 
       // API 호출 헬퍼
