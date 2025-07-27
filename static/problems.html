@@ -1,5 +1,5 @@
-<script>
-      console.log("📋 Problems 페이지 로드됨");
+// problems.html
+// ... (생략) ...
 
       // 인증 확인
       function checkAuth() {
@@ -12,202 +12,19 @@
           return false;
         }
 
-        document.getElementById("userName").textContent = userName || "사용자";
+        // --- 이 부분을 수정합니다 ---
+        const userNameElement = document.getElementById("userName");
+        if (userNameElement) { // userNameElement가 null이 아닌지 확인
+            userNameElement.textContent = userName || "사용자";
+        } else {
+            console.warn("⚠️ 'userName' 요소를 찾을 수 없습니다.");
+            // 오류가 발생했지만, 앱의 핵심 기능은 아니므로 진행할 수 있도록 합니다.
+        }
+        // --- 여기까지 수정합니다 ---
+
         console.log("✅ 토큰 확인됨, Problems 페이지 진행");
         
-        // --- 다음 줄들은 삭제하거나 주석 처리합니다. ---
-        // try {
-        //     const userResponse = await apiCall("/api/user-status"); 
-        //     if (userResponse && userResponse.tutorial_completed === false) {
-        //         console.log("⚠️ 튜토리얼 미완료, Tutorial1 페이지로 이동");
-        //         window.location.replace("/tutorial1"); 
-        //         return false;
-        //     }
-        // } catch (error) {
-        //     console.error("❌ 사용자 상태 확인 오류:", error);
-        // }
-        // --- 여기까지 삭제하거나 주석 처리합니다. ---
-
         return true;
       }
 
-      // 로그아웃 - 히스토리 완전 초기화
-      function logout() {
-        console.log("🚪 로그아웃 실행");
-        
-        // localStorage 완전 삭제
-        localStorage.clear();
-        
-        // 세션 스토리지도 삭제
-        sessionStorage.clear();
-        
-        console.log("🧹 모든 저장소 초기화 완료");
-        
-        // 히스토리 완전 초기화하고 로그인 페이지로 이동
-        window.location.replace("/");
-      }
-
-      // API 호출 헬퍼
-      async function apiCall(url, options = {}) {
-        const token = localStorage.getItem("access_token");
-
-        const defaultOptions = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            ...options.headers,
-          },
-        };
-
-        const response = await fetch(url, { ...options, ...defaultOptions });
-
-        if (response.status === 401) {
-          // 토큰이 만료된 경우
-          console.log("❌ 토큰 만료, 로그아웃 처리");
-          logout();
-          return null;
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return response.json();
-      }
-
-      // 슬로건 배열
-      const slogans = [
-        "한 줄 한 줄, 코드의 의도를 고민해 봅시다.",
-        "틀려도 괜찮아요. 시도하는 게 더 중요해요!",
-        "도전할 준비 되셨나요? 당신이라면 할 수 있어요!",
-        "여기엔 어떤 아이디어가 숨어 있을까요?",
-        "이 코드, 과연 무슨 일을 할까요?",
-      ];
-
-      // 문제별로 고정된 슬로건을 반환하는 함수
-      function getSloganForProblem(problemId) {
-        // problemId에서 숫자만 추출
-        const numMatch = problemId.match(/\d+/);
-        const num = numMatch ? parseInt(numMatch[0]) : 0;
-
-        // 문제 번호에 따라 고정된 슬로건 선택
-        return slogans[num % slogans.length];
-      }
-
-      // 문제 목록 로드
-      async function loadProblems() {
-        console.log("📋 문제 목록 로드 시작");
-        
-        try {
-          const [problems, submissions] = await Promise.all([
-            apiCall("/api/problems"),
-            apiCall("/api/my-submissions"),
-          ]);
-
-          if (!problems || !submissions) return;
-
-          console.log(`📊 문제 ${problems.length}개, 제출 내역 ${submissions.length}개 로드됨`);
-
-          const submissionMap = new Map();
-          submissions.forEach((sub) => {
-            submissionMap.set(sub.problem_id, sub);
-          });
-
-          displayProblems(problems, submissionMap);
-        } catch (error) {
-          console.error("❌ 문제 목록 로드 오류:", error);
-          document.getElementById("loadingMessage").style.display = "none";
-          document.getElementById("errorMessage").style.display = "block";
-          document.getElementById("errorMessage").textContent =
-            "문제를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침 해주세요.";
-        }
-      }
-
-      // 문제 목록 표시
-      function displayProblems(problems, submissionMap) {
-        const grid = document.getElementById("problemsGrid");
-        const loading = document.getElementById("loadingMessage");
-
-        loading.style.display = "none";
-        grid.style.display = "grid";
-
-        grid.innerHTML = problems
-          .map((problem) => {
-            const submission = submissionMap.get(problem.problem_id);
-            const isSubmitted = !!submission;
-
-            // 문제별 고정 슬로건 표시
-            const slogan = getSloganForProblem(problem.problem_id);
-
-            return `
-                    <div class="problem-card">
-                        <div class="problem-header">
-                            <div class="problem-id">#${problem.problem_id}</div>
-                            <h3 class="problem-title">${problem.title}</h3>
-                        </div>
-                        <div class="problem-content">${slogan}</div>
-                        <div class="problem-footer">
-                            <div class="max-score">최대 ${
-                              problem.max_score
-                            }점</div>
-                            <button class="solve-btn" data-problem-id="${
-                              problem.problem_id
-                            }">
-                                ${isSubmitted ? "다시 풀기" : "문제 풀기"}
-                            </button>
-                        </div>
-                        <div class="submission-status">
-                            <span class="status-badge ${
-                              isSubmitted
-                                ? "status-submitted"
-                                : "status-not-submitted"
-                            }">
-                                ${isSubmitted ? "제출 완료" : "미제출"}
-                            </span>
-                            ${
-                              isSubmitted
-                                ? `<span style="font-size: 12px; color: #666;">
-                                ${new Date(
-                                  submission.submitted_at
-                                ).toLocaleString("ko-KR")}
-                            </span>`
-                                : ""
-                            }
-                        </div>
-                    </div>
-                `;
-          })
-          .join("");
-
-        // 문제 풀기 버튼 이벤트 리스너 추가
-        document.querySelectorAll('.solve-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const problemId = this.getAttribute('data-problem-id');
-            solveProblem(problemId);
-          });
-        });
-
-        console.log("📋 문제 목록 표시 완료");
-      }
-
-      // 문제 풀기
-      function solveProblem(problemId) {
-        console.log(`📝 문제 ${problemId} 풀기 시작`);
-        window.location.href = `/problem/${problemId}`;
-      }
-
-      // 페이지 로드 시 실행
-      document.addEventListener("DOMContentLoaded", function () {
-        console.log("📋 Problems 페이지 초기화 시작");
-        
-        if (!checkAuth()) return;
-
-        // 이벤트 리스너 등록
-        document.getElementById("logout-btn").addEventListener("click", logout);
-
-        // 문제 목록 로드
-        loadProblems();
-        
-        console.log("📋 Problems 페이지 초기화 완료");
-      });
-    </script>
+// ... (생략) ...
