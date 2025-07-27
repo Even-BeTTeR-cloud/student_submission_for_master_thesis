@@ -169,6 +169,11 @@
     </div>
 
     <script>
+      // 페이지 로드 즉시 모든 저장소 완전 정리 (깨끗한 시작)
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log("🧹 모든 저장소 초기화 완료");
+
       document
         .getElementById("loginForm")
         .addEventListener("submit", async function (e) {
@@ -185,6 +190,8 @@
           loginBtn.textContent = "로그인 중...";
           errorMessage.style.display = "none";
 
+          console.log(`🔐 로그인 시도: ${userId}`);
+
           try {
             const response = await fetch("/api/login", {
               method: "POST",
@@ -200,19 +207,25 @@
             const data = await response.json();
 
             if (response.ok) {
+              console.log("✅ 로그인 성공!");
+              
               // 토큰 저장
               localStorage.setItem("access_token", data.access_token);
               localStorage.setItem("user_name", data.user_name);
-
-              // 로그인 성공 시 항상 튜토리얼로 이동
-              window.location.href = "/tutorial1";
+              
+              console.log("💾 토큰 저장 완료");
+              console.log("🎯 튜토리얼로 이동 중...");
+              
+              // 무조건 튜토리얼로 이동 (히스토리 없이)
+              window.location.replace("/tutorial1");
+              
             } else {
-              // 에러 메시지 표시
+              console.log("❌ 로그인 실패:", data.detail);
               errorMessage.textContent = data.detail || "로그인에 실패했습니다";
               errorMessage.style.display = "block";
             }
           } catch (error) {
-            console.error("Login error:", error);
+            console.error("🚨 로그인 에러:", error);
             errorMessage.textContent =
               "서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
             errorMessage.style.display = "block";
@@ -222,17 +235,6 @@
             loginBtn.textContent = "로그인";
           }
         });
-
-      // 페이지 로드 시 토큰 확인 및 정리
-      document.addEventListener('DOMContentLoaded', function() {
-        // 기존 토큰이 있다면 완전히 삭제 (깨끗한 시작)
-        const existingToken = localStorage.getItem("access_token");
-        if (existingToken) {
-          console.log("기존 토큰 발견, 완전 초기화 중...");
-          localStorage.clear();
-          sessionStorage.clear();
-        }
-      });
     </script>
   </body>
 </html>
