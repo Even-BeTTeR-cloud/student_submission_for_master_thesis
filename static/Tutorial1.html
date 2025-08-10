@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>튜토리얼 1: 변수 값 교환하기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .tutorial-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tutorial-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .tutorial-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .step {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .step.inactive {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .tutorial-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        .code-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .code-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .code-title::before {
+            content: "💻";
+            margin-right: 8px;
+        }
+
+        .code-block {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            position: relative;
+        }
+
+        .code-line {
+            display: block;
+            padding: 5px 10px;
+            margin: 2px 0;
+            border-radius: 4px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .code-line.executing {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            transform: translateX(5px);
+        }
+
+        .highlighted-section {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            position: relative;
+        }
+
+        .highlighted-section::before {
+            content: "🎯 집중 구역";
+            position: absolute;
+            top: -12px;
+            left: 15px;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .variable-tracker {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #c8e6c9;
+        }
+
+        .tracker-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2e7d32;
+            display: flex;
+            align-items: center;
+        }
+
+        .tracker-title::before {
+            content: "📊";
+            margin-right: 8px;
+        }
+
+        .variable-box {
+            background: white;
+            border: 2px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .variable-box.changed {
+            border-color: #ff9800;
+            background: #fff3e0;
+            transform: scale(1.02);
+        }
+
+        .variable-name {
+            font-weight: bold;
+            color: #1b5e20;
+            font-size: 16px;
+        }
+
+        .variable-value {
+            font-size: 24px;
+            color: #2e7d32;
+            margin-top: 5px;
+        }
+
+        .control-panel {
+            grid-column: span 2;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .step-description {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        /* 예측 및 질문 섹션 스타일 */
+        .prediction-section, .question-section {
+            grid-column: span 2;
+            background: #e3f2fd;
+            border: 2px solid #90caf9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .prediction-title, .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .prediction-title::before, .question-title::before {
+            content: "🤔";
+            margin-right: 8px;
+        }
+
+        .prediction-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .prediction-option {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .prediction-option:hover {
+            border-color: #667eea;
+        }
+        .prediction-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .feedback {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .feedback.correct {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .feedback.incorrect {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #90caf9;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .answer-input:focus {
+            outline: none;
+            border-color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .tutorial-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            .control-panel, .prediction-section, .question-section {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tutorial-container">
+        <div class="tutorial-header">
+            <h1>🎓 튜토리얼 1: 변수 값 교환하기</h1>
+            <p>코드가 한 줄씩 실행될 때 어떤 일이 일어나는지 예측하며 따라가 봅시다.</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step-0">시작</div>
+            <div class="step inactive" id="step-1">첫째 줄</div>
+            <div class="step inactive" id="step-2">둘째 줄</div>
+            <div class="step inactive" id="step-3">셋째 줄</div>
+            <div class="step inactive" id="step-4">최종 성찰</div>
+        </div>
+
+        <div class="tutorial-content">
+            <div class="code-section">
+                <div class="code-title">코드 실행</div>
+                <div class="code-block">
+                    <span class="code-line" id="line-0">a = 1</span>
+                    <span class="code-line" id="line-1">b = 2</span>
+                    <span class="code-line" style="height: 10px;"></span>
+                    <div class="highlighted-section">
+                        <span class="code-line" id="line-2">tmp = a</span>
+                        <span class="code-line" id="line-3">a = b</span>
+                        <span class="code-line" id="line-4">b = tmp</span>
+                    </div>
+                </div>
+                <div class="step-description" id="step-description">
+                    <strong>🚀 시작:</strong> 변수 a와 b의 초기값을 설정합니다. '다음' 버튼을 눌러 시작하세요.
+                </div>
+            </div>
+
+            <div class="variable-tracker">
+                <div class="tracker-title">변수 상태 추적</div>
+                <div class="variable-box" id="var-a">
+                    <div class="variable-name">변수 a</div>
+                    <div class="variable-value" id="value-a">1</div>
+                </div>
+                <div class="variable-box" id="var-b">
+                    <div class="variable-name">변수 b</div>
+                    <div class="variable-value" id="value-b">2</div>
+                </div>
+                <div class="variable-box" id="var-tmp" style="display: none;">
+                    <div class="variable-name">변수 tmp</div>
+                    <div class="variable-value" id="value-tmp">?</div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="control-buttons">
+                    <button class="btn btn-secondary" id="prev-btn" disabled>⬅️ 이전</button>
+                    <button class="btn btn-primary" id="next-btn">다음 ➡️</button>
+                </div>
+                <div id="current-step-info"></div>
+            </div>
+
+            <div class="prediction-section" id="prediction-section" style="display: none;">
+                <div class="prediction-title" id="prediction-title"></div>
+                <div class="prediction-options" id="prediction-options"></div>
+                <div class="feedback" id="feedback" style="display: none;"></div>
+            </div>
+
+            <div class="question-section" id="question-section" style="display: none;">
+                <div class="question-title">최종 성찰</div>
+                <p>지금까지 본 내용으로, 파란색으로 강조된 부분은 어떤 역할을 하는 것 같나요?</p>
+                <textarea class="answer-input" id="final-answer" placeholder="예시: 변수 a와 b의 값을 서로 바꾸는 역할을 합니다..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const maxSteps = 4;
+
+        const steps = [
+            {
+                description: "🚀 시작: 변수 a와 b의 초기값을 설정합니다. '다음' 버튼을 눌러 시작하세요.",
+                line: null,
+                variables: { a: 1, b: 2, tmp: null },
+                prediction: null
+            },
+            {
+                description: "📦 첫째 줄: 'tmp = a'가 실행됩니다.",
+                line: "line-2",
+                variables: { a: 1, b: 2, tmp: 1 },
+                prediction: {
+                    question: "다음에 무슨 일이 일어날까요?",
+                    options: ["tmp의 값은 1이 된다.", "a의 값은 2가 된다.", "b의 값은 1이 된다."],
+                    answer: 0
+                }
+            },
+            {
+                description: "🔄 둘째 줄: 'a = b'가 실행됩니다.",
+                line: "line-3", 
+                variables: { a: 2, b: 2, tmp: 1 },
+                prediction: {
+                    question: "다음에 무슨 일이 일어날까요?",
+                    options: ["a의 값은 2가 된다.", "b의 값은 1이 된다.", "tmp의 값은 2가 된다."],
+                    answer: 0
+                }
+            },
+            {
+                description: "✨ 셋째 줄: 'b = tmp'가 실행됩니다.",
+                line: "line-4",
+                variables: { a: 2, b: 1, tmp: 1 },
+                prediction: {
+                    question: "다음에 무슨 일이 일어날까요?",
+                    options: ["b의 값은 1이 된다.", "a의 값은 1이 된다.", "tmp의 값은 2가 된다."],
+                    answer: 0
+                }
+            },
+            {
+                description: "🤔 최종 성찰: 전체 과정을 되돌아보며 코드의 의미를 파악해봅시다.",
+                line: null,
+                variables: { a: 2, b: 1, tmp: 1 },
+                prediction: null
+            }
+        ];
+
+        function updateUI() {
+            const stepData = steps[currentStep];
+            
+            // 단계 표시기
+            for (let i = 0; i <= maxSteps; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if (i < currentStep) stepEl.className = "step completed";
+                else if (i === currentStep) stepEl.className = "step active";
+                else stepEl.className = "step inactive";
+            }
+
+            // 코드 하이라이트
+            document.querySelectorAll('.code-line').forEach(line => line.classList.remove('executing'));
+            if (stepData.line) document.getElementById(stepData.line).classList.add('executing');
+
+            // 변수 값
+            if (currentStep > 0) {
+                const prevStepData = steps[currentStep - 1];
+                updateVariable('a', prevStepData.variables.a, stepData.variables.a);
+                updateVariable('b', prevStepData.variables.b, stepData.variables.b);
+                updateVariable('tmp', prevStepData.variables.tmp, stepData.variables.tmp);
+            } else {
+                updateVariable('a', null, stepData.variables.a);
+                updateVariable('b', null, stepData.variables.b);
+                updateVariable('tmp', null, stepData.variables.tmp);
+            }
+            
+            // 설명
+            document.getElementById('step-description').innerHTML = stepData.description;
+            document.getElementById('current-step-info').innerHTML = `<strong>현재 단계:</strong> ${currentStep}/${maxSteps}`;
+
+            // 버튼 상태
+            document.getElementById('prev-btn').disabled = currentStep === 0;
+            const nextBtn = document.getElementById('next-btn');
+            
+            // 예측 섹션 또는 최종 질문 표시
+            const predictionSection = document.getElementById('prediction-section');
+            const questionSection = document.getElementById('question-section');
+
+            if (currentStep > 0 && currentStep < maxSteps) {
+                predictionSection.style.display = 'block';
+                questionSection.style.display = 'none';
+                showPrediction();
+                nextBtn.disabled = true;
+            } else if (currentStep === maxSteps) {
+                predictionSection.style.display = 'none';
+                questionSection.style.display = 'block';
+                nextBtn.textContent = '다음 튜토리얼로 ➡️';
+                nextBtn.disabled = false;
+            } else {
+                predictionSection.style.display = 'none';
+                questionSection.style.display = 'none';
+                nextBtn.disabled = false;
+            }
+        }
+
+        function updateVariable(name, oldValue, newValue) {
+            const varEl = document.getElementById(`var-${name}`);
+            const valueEl = document.getElementById(`value-${name}`);
+            if (!varEl || !valueEl) return;
+
+            if (name === 'tmp' && newValue === null) {
+                varEl.style.display = 'none';
+                return;
+            } else if (name === 'tmp') {
+                varEl.style.display = 'block';
+            }
+
+            valueEl.textContent = newValue === null ? '?' : newValue.toString();
+            
+            if (oldValue !== newValue) {
+                varEl.classList.add('changed');
+                setTimeout(() => varEl.classList.remove('changed'), 1000);
+            }
+        }
+
+        function showPrediction() {
+            const prediction = steps[currentStep].prediction;
+            if (!prediction) return;
+
+            document.getElementById('prediction-title').textContent = prediction.question;
+            const optionsContainer = document.getElementById('prediction-options');
+            optionsContainer.innerHTML = '';
+            
+            prediction.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'prediction-option';
+                optionEl.textContent = option;
+                optionEl.addEventListener('click', () => handlePrediction(index));
+                optionsContainer.appendChild(optionEl);
+            });
+
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        function handlePrediction(selectedIndex) {
+            const correctAnswerIndex = steps[currentStep].prediction.answer;
+            const feedbackEl = document.getElementById('feedback');
+            
+            if (selectedIndex === correctAnswerIndex) {
+                feedbackEl.textContent = '✅ 맞았어요! 다음 단계로 진행하세요.';
+                feedbackEl.className = 'feedback correct';
+                document.getElementById('next-btn').disabled = false;
+            } else {
+                feedbackEl.textContent = '❌ 다시 생각해보세요.';
+                feedbackEl.className = 'feedback incorrect';
+            }
+            feedbackEl.style.display = 'block';
+        }
+
+        function nextStep() {
+            if (currentStep < maxSteps) {
+                currentStep++;
+                updateUI();
+            } else {
+                window.location.href = '/tutorial1_5';
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                window.location.href = "/";
+                return;
+            }
+            document.getElementById('next-btn').addEventListener('click', nextStep);
+            document.getElementById('prev-btn').addEventListener('click', prevStep);
+            updateUI();
+        });
+    </script>
+</body>
+</html>

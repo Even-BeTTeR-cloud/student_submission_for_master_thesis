@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>문제 풀이 - 학생 답안 제출 시스템</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f5f5f5;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: clamp(15px, 3vw, 20px) 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        width: 100vw;
+        position: relative;
+      }
+
+      .header-content {
+        width: 100%;
+        margin: 0;
+        padding: clamp(4px, 1vw, 8px) clamp(16px, 3vw, 24px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        min-height: 50px;
+      }
+
+      .header h1 {
+        font-size: clamp(18px, 4vw, 24px);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        padding: 0 12px;
+      }
+
+      .nav-buttons {
+        display: flex;
+        gap: clamp(6px, 1.5vw, 8px);
+        position: absolute;
+        right: clamp(16px, 3vw, 24px);
+        top: 50%;
+        transform: translateY(-50%);
+        padding: clamp(2px, 0.5vw, 4px) 0;
+      }
+
+      .nav-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px);
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        font-size: clamp(12px, 2.5vw, 14px);
+        white-space: nowrap;
+        margin: 1px;
+      }
+
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .container {
+        max-width: 98vw;
+        margin: 4px auto;
+        padding: 0 6px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        align-items: start;
+        height: calc(100vh - 80px);
+      }
+
+      .problem-section {
+        background: white;
+        border-radius: 6px;
+        padding: 12px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .problem-section * {
+        margin: 0 !important;
+      }
+
+      .problem-section .problem-header {
+        margin-bottom: 8px !important;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+
+      .problem-section .problem-code {
+        margin-top: 8px !important;
+        margin-bottom: 0 !important;
+        overflow: visible !important;
+      }
+
+      .problem-section .problem-description {
+        margin-bottom: 4px !important;
+      }
+
+      .answer-section {
+        background: white;
+        border-radius: 6px;
+        padding: 12px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .problem-header {
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+
+      .problem-id {
+        color: #667eea;
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 2px;
+      }
+
+      .problem-title {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 4px;
+        line-height: 1.2;
+      }
+
+      .problem-info {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .max-score {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        white-space: nowrap;
+      }
+
+      .problem-content {
+        color: #333;
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .problem-description {
+        font-family: "sans-serif";
+        color: #333;
+        font-size: 15px;
+        line-height: 1.3;
+        margin-bottom: 8px;
+      }
+
+      /* problem-code 내부의 pre와 code 스타일 조정 */
+      .problem-code {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 6px; /* 이 부분을 너무 줄이면 강조박스가 잘릴 수 있습니다 */
+        margin: 6px 0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        position: relative; /* highlighted-section::before를 위해 필요 */
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      /* 기존 "코드" 라벨은 필요에 따라 유지하거나 제거 */
+      .problem-code::before {
+        content: "코드";
+        position: absolute;
+        top: -8px;
+        left: 10px;
+        background: #667eea;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: clamp(9px, 2vw, 11px);
+        font-weight: bold;
+        z-index: 1;
+      }
+
+      .problem-code pre {
+        margin: 0;
+        background: #f8fafc;
+        padding: clamp(6px, 1.5vw, 12px); /* 안쪽 여백 추가 */
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
+        font-size: clamp(11px, 2.5vw, 14px);
+        line-height: 1.4;
+        color: #1e293b;
+        max-width: 100%;
+        /* pre 안의 code-line들이 줄바꿈되지 않도록 설정 */
+        white-space: pre-wrap; /* 여기서 pre-wrap을 사용하면 긴 라인이 자동으로 줄바꿈됩니다. */
+                            /* 원본 코드의 줄바꿈을 유지하면서 넘칠 때만 줄바꿈하려면 pre-wrap, */
+                            /* 강제 줄바꿈 없이 한 줄로 유지하려면 pre를 사용합니다. */
+      }
+
+      .problem-code code {
+        background: transparent;
+        padding: 0;
+        border: none;
+        font-family: inherit;
+        color: inherit;
+        white-space: pre; /* 백엔드에서 span 태그 안에 들어있는 각 라인의 공백을 유지합니다. */
+      }
+
+      /* 강조 표시 스타일 (꾸미기 설정) */
+      .highlighted-section {
+          background: rgba(102, 126, 234, 0.1); /* 연한 파란색 배경 */
+          border: 2px dashed #667eea; /* 점선 테두리 */
+          border-radius: 8px;
+          padding: 10px; /* 안쪽 여백 */
+          margin: 5px 0; /* 위아래 여백 */
+          position: relative;
+      }
+
+      .highlighted-section::before {
+          content: "🎯 집중 구역";
+          position: absolute;
+          top: -12px; /* 상단 여백 조절 */
+          left: 15px; /* 좌측 여백 조절 */
+          background: #667eea;
+          color: white;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: bold;
+          z-index: 2; /* 다른 요소 위에 표시되도록 z-index 설정 */
+      }
+
+      .code-line { /* 각 코드 줄에 대한 기본 스타일 */
+          display: block; /* 줄바꿈 */
+          padding: 2px 0; /* 줄 간격 조절 */
+          /* 코드 라인 자체의 들여쓰기 등이 포함되어야 하므로 white-space: pre-wrap; 이나 pre는 상위 pre 태그에서만 제어하는 것이 좋습니다. */
+      }
+
+
+      .problem-content pre {
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #667eea;
+        margin: 8px 0;
+        overflow-x: auto;
+        font-family: "Consolas", "Monaco", monospace;
+      }
+
+      .answer-header {
+        margin-bottom: 12px;
+      }
+
+      .answer-header h2 {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 5px;
+      }
+
+      .answer-header p {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .answer-form {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .answer-textarea {
+        flex: 1;
+        width: 100%;
+        min-height: clamp(250px, 40vh, 400px);
+        max-height: 70vh;
+        padding: clamp(10px, 2vw, 15px);
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: clamp(14px, 3vw, 16px);
+        line-height: 1.5;
+        resize: vertical;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+
+      .answer-textarea:focus {
+        border-color: #667eea;
+      }
+
+      .answer-footer {
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .char-count {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .submit-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .submit-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+
+      .error {
+        background: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        border-left: 3px solid #f44336;
+      }
+
+      .success {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        border-left: 3px solid #4caf50;
+      }
+
+      .submission-status {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        border-left: 3px solid #667eea;
+      }
+
+      .submission-status h3 {
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 15px;
+      }
+
+      .submission-status p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          grid-template-columns: 1fr;
+          gap: clamp(6px, 2vw, 12px);
+          margin: 6px auto;
+          padding: 0 6px;
+          max-width: 100vw;
+        }
+
+        .problem-section,
+        .answer-section {
+          padding: clamp(10px, 3vw, 16px);
+          margin: 0;
+        }
+
+        .problem-description {
+          font-size: clamp(14px, 4vw, 18px);
+        }
+
+        .answer-section {
+          min-height: 50vh;
+        }
+
+        .answer-textarea {
+          min-height: clamp(200px, 35vh, 300px);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 0 4px;
+          gap: 8px;
+        }
+
+        .problem-section,
+        .answer-section {
+          padding: 8px;
+        }
+
+        .header-content {
+          padding: 0 10px;
+        }
+
+        .nav-btn {
+          padding: 6px 12px;
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <h1>학생 답안 제출 시스템</h1>
+        <div class="nav-buttons">
+          <a href="/problems" class="nav-btn">문제 목록</a>
+          <button class="nav-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="problem-section">
+        <div id="loadingMessage" class="loading">문제를 불러오는 중...</div>
+        <div id="errorMessage" class="error" style="display: none"></div>
+        <div id="problemContent" style="display: none">
+          <div class="problem-header">
+            <div class="problem-id" id="problemId"></div>
+            <h1 class="problem-title" id="problemTitle"></h1>
+            <div class="problem-info">
+              <span class="max-score" id="maxScore"></span>
+            </div>
+          </div>
+          <div class="problem-content" id="problemText"></div>
+        </div>
+      </div>
+
+      <div class="answer-section">
+        <div class="answer-header">
+          <h2>답안 작성</h2>
+          <p>아래 텍스트 영역에 자유롭게 답안을 작성해주세요.</p>
+        </div>
+
+        <div
+          id="submissionStatus"
+          class="submission-status"
+          style="display: none"
+        >
+          <h3>이전 제출 내역</h3>
+          <p id="submissionTime"></p>
+          <p>
+            이미 답안을 제출하셨습니다. 아래에서 답안을 수정하고 다시 제출할 수
+            있습니다.
+          </p>
+        </div>
+
+        <div id="successMessage" class="success" style="display: none"></div>
+        <div id="submitError" class="error" style="display: none"></div>
+
+        <form class="answer-form" id="answerForm">
+          <textarea
+            class="answer-textarea"
+            id="answerText"
+            placeholder="여기에 답안을 작성해주세요..."
+            required
+          ></textarea>
+
+          <div class="answer-footer">
+            <span class="char-count" id="charCount">0자</span>
+            <button type="submit" class="submit-btn" id="submitBtn">
+              답안 제출
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let currentProblemId = null;
+
+      // 인증 확인
+      function checkAuth() {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          window.location.href = "/";
+          return false;
+        }
+        return true;
+      }
+
+      // 로그아웃 - 히스토리 완전 초기화
+      function logout() {
+        // localStorage 완전 삭제
+        localStorage.clear();
+        
+        // 세션 스토리지도 삭제
+        sessionStorage.clear();
+        
+        // 히스토리 완전 초기화하고 로그인 페이지로 이동
+        window.location.replace("/");
+      }
+
+      // URL에서 문제 ID 추출
+      function getProblemIdFromUrl() {
+        const path = window.location.pathname;
+        const match = path.match(/\/problem\/(.+)$/);
+        return match ? match[1] : null;
+      }
+
+      // API 호출 헬퍼
+      async function apiCall(url, options = {}) {
+        const token = localStorage.getItem("access_token");
+
+        const defaultOptions = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        };
+
+        const response = await fetch(url, { ...options, ...defaultOptions });
+
+        if (response.status === 401) {
+          logout();
+          return null;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.detail || `HTTP error! status: ${response.status}`
+          );
+        }
+
+        return response.json();
+      }
+
+      // 문제 로드
+      async function loadProblem(problemId) {
+        try {
+          const [problem, submissions] = await Promise.all([
+            apiCall(`/api/problems/${problemId}`),
+            apiCall("/api/my-submissions"),
+          ]);
+
+          if (!problem) return;
+
+          displayProblem(problem);
+
+          // 기존 제출 내역 확인
+          const existingSubmission = submissions.find(
+            (sub) => sub.problem_id === problemId
+          );
+          if (existingSubmission) {
+            showExistingSubmission(existingSubmission);
+          }
+
+          document.getElementById("loadingMessage").style.display = "none";
+          document.getElementById("problemContent").style.display = "block";
+        } catch (error) {
+          console.error("Error loading problem:", error);
+          document.getElementById("loadingMessage").style.display = "none";
+          document.getElementById("errorMessage").style.display = "block";
+          document.getElementById("errorMessage").textContent =
+            "문제를 불러오는 중 오류가 발생했습니다: " + error.message;
+        }
+      }
+
+      // 문제 표시 수정 - 설명과 코드 분리, 강조 표시 반영
+      function displayProblem(problem) {
+        document.getElementById(
+          "problemId"
+        ).textContent = `#${problem.problem_id}`;
+        document.getElementById("problemTitle").textContent = problem.title;
+        document.getElementById(
+          "maxScore"
+        ).textContent = `최대 ${problem.max_score}점`;
+
+        // 설명과 코드를 분리해서 표시 - 여백 최소화
+        const problemTextElement = document.getElementById("problemText");
+
+        // 백엔드에서 HTML이 포함된 코드를 받으므로 innerHTML 사용
+        problemTextElement.innerHTML = `
+            <div class="problem-description">${problem.description}</div>
+            <div class="problem-code">
+                <pre><code>${problem.code}</code></pre> </div>
+        `;
+
+        // 페이지 제목 업데이트
+        document.title = `${problem.title} - 학생 답안 제출 시스템`;
+      }
+
+      // 기존 제출 내역 표시
+      function showExistingSubmission(submission) {
+        const statusDiv = document.getElementById("submissionStatus");
+        const timeElement = document.getElementById("submissionTime");
+        const answerTextarea = document.getElementById("answerText");
+
+        statusDiv.style.display = "block";
+        timeElement.textContent = `제출 시간: ${new Date(
+          submission.submitted_at
+        ).toLocaleString("ko-KR")}`;
+        answerTextarea.value = submission.answer;
+
+        // 글자 수 업데이트
+        updateCharCount();
+      }
+
+      // 글자 수 업데이트
+      function updateCharCount() {
+        const textarea = document.getElementById("answerText");
+        const charCount = document.getElementById("charCount");
+        const length = textarea.value.length;
+        charCount.textContent = `${length.toLocaleString()}자`;
+      }
+
+      // 답안 제출
+      async function submitAnswer(event) {
+        event.preventDefault();
+
+        const answerText = document.getElementById("answerText").value.trim();
+        const submitBtn = document.getElementById("submitBtn");
+        const successMessage = document.getElementById("successMessage");
+        const errorMessage = document.getElementById("submitError");
+
+        if (!answerText) {
+          errorMessage.textContent = "답안을 작성해주세요.";
+          errorMessage.style.display = "block";
+          return;
+        }
+
+        // 로딩 상태
+        submitBtn.disabled = true;
+        submitBtn.textContent = "제출 중...";
+        successMessage.style.display = "none";
+        errorMessage.style.display = "none";
+
+        try {
+          await apiCall("/api/submit", {
+            method: "POST",
+            body: JSON.stringify({
+              problem_id: currentProblemId,
+              answer: answerText,
+            }),
+          });
+
+          successMessage.textContent = "답안이 성공적으로 제출되었습니다!";
+          successMessage.style.display = "block";
+
+          // 제출 상태 업데이트
+          const now = new Date();
+          showExistingSubmission({
+            submitted_at: now.toISOString(),
+            answer: answerText,
+          });
+        } catch (error) {
+          console.error("Submit error:", error);
+          errorMessage.textContent =
+            "답안 제출 중 오류가 발생했습니다: " + error.message;
+          errorMessage.style.display = "block";
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "답안 제출";
+        }
+      }
+
+      // 이벤트 리스너 등록
+      document.addEventListener("DOMContentLoaded", function () {
+        if (!checkAuth()) return;
+
+        currentProblemId = getProblemIdFromUrl();
+        if (!currentProblemId) {
+          window.location.href = "/problems";
+          return;
+        }
+
+        loadProblem(currentProblemId);
+
+        // 글자 수 카운터
+        document
+          .getElementById("answerText")
+          .addEventListener("input", updateCharCount);
+
+        // 답안 제출 폼
+        document
+          .getElementById("answerForm")
+          .addEventListener("submit", submitAnswer);
+      });
+    </script>
+  </body>
+</html>

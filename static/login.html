@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인 - 코드 읽기 학습 플랫폼</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .login-container {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        max-width: 90%;
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .login-header h1 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .login-header p {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+      }
+      
+      .demo-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 20px;
+        border-left: 4px solid #2196f3;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>코드 읽기 학습 플랫폼</h1>
+        <p>로그인하여 학습을 시작하거나 제출 현황을 확인하세요.</p>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="userId">아이디 (학번 또는 교사 ID)</label>
+          <input type="text" id="userId" required placeholder="아이디를 입력하세요" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" required placeholder="비밀번호를 입력하세요" />
+        </div>
+
+        <button type="submit" class="login-btn" id="loginBtn">로그인</button>
+      </form>
+
+      <div class="demo-info">
+        <p><strong>학생 예시:</strong> ID(250100), PW(250100)</p>
+        <p><strong>교사 예시:</strong> ID(t_jeil), PW(t_jeil)</p>
+      </div>
+    </div>
+
+    <script>
+      localStorage.clear();
+      sessionStorage.clear();
+
+      document.getElementById("loginForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const userId = document.getElementById("userId").value;
+        const password = document.getElementById("password").value;
+        const errorMessage = document.getElementById("errorMessage");
+        const loginBtn = document.getElementById("loginBtn");
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = "로그인 중...";
+        errorMessage.style.display = "none";
+
+        try {
+          const response = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, password: password }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("user_name", data.user_name);
+            localStorage.setItem("user_type", data.user_type);
+
+            if (data.user_type === "teacher") {
+              window.location.replace("/teacher/dashboard");
+            } else {
+              window.location.replace("/tutorial0");
+            }
+          } else {
+            errorMessage.textContent = data.detail || "로그인에 실패했습니다.";
+            errorMessage.style.display = "block";
+          }
+        } catch (error) {
+          errorMessage.textContent = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
+          errorMessage.style.display = "block";
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = "로그인";
+        }
+      });
+    </script>
+  </body>
+</html>

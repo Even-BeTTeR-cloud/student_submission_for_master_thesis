@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>답안 작성 가이드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .page-content {
+            padding: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .answer-option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .answer-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            border-left: 4px solid;
+        }
+        .feedback.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+        .feedback.incorrect { background: #ffebee; border-color: #f44336; color: #c62828; }
+
+        /* 친구 답변 예시 스타일 */
+        .friends-answer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .friend-answer {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid;
+        }
+        .friend-answer.good { border-color: #4caf50; }
+        .friend-answer.bad { border-color: #f44336; }
+        .friend-answer-text {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .friend-answer-analysis {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .friend-answer-analysis.good { color: #2e7d32; }
+        .friend-answer-analysis.bad { color: #c62828; }
+
+        /* 채점 기준 스타일 */
+        .criteria-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 2px solid #667eea;
+        }
+        .criteria-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .criteria-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        .criteria-item-title { font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .criteria-item-desc { color: #666; font-size: 14px; }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .action-buttons { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🎓 답안 작성 가이드</h1>
+            <p>좋은 답안 작성법을 배우고 다른 친구들의 생각을 살펴보세요!</p>
+        </div>
+
+        <div class="page-content">
+            <div class="section">
+                <div class="section-title">
+                    🤔 "변수 값 교환" 코드에 대해 친구에게 설명한다면, 어떤 것이 가장 좋은 설명일까요?
+                </div>
+                <div class="answer-options">
+                    <div class="answer-option" id="option-1">"첫 줄은 tmp에 a를 저장하고, 둘째 줄은 a에 b를, 셋째 줄은 b에 tmp를 저장해."</div>
+                    <div class="answer-option" id="option-2">"a와 b를 더하는 코드야."</div>
+                    <div class="answer-option" id="option-3">"tmp를 써서 변수 값을 바꾸는 코드야."</div>
+                    <div class="answer-option" id="option-4">"a와 b의 값을 서로 바꾸는(교환하는) 코드야."</div>
+                </div>
+                <div class="feedback incorrect" id="feedback-1"><strong>❌ 너무 길어요:</strong> 코드의 동작을 그대로 설명하기보다 전체적인 '역할'을 요약하는 게 좋아요.</div>
+                <div class="feedback incorrect" id="feedback-2"><strong>❌ 틀린 설명이에요:</strong> 코드는 덧셈이 아니라 값의 교환을 수행해요.</div>
+                <div class="feedback incorrect" id="feedback-3"><strong>❌ 애매한 설명이에요:</strong> '값을 바꾼다'가 구체적으로 무엇을 의미하는지 명확하지 않아요.</div>
+                <div class="feedback correct" id="feedback-4"><strong>✅ 정확하고 간결해요!</strong> 코드의 핵심 역할인 '값 교환'을 명확히 설명했어요.</div>
+            </div>
+
+            <div class="section" id="friends-answer-section">
+                <h2 class="section-title">👀 다른 친구들의 답변 예시</h2>
+                <div class="friends-answer-list">
+                    <div class="friend-answer good">
+                        <p class="friend-answer-text">"두 변수의 값을 임시 변수를 사용해서 바꾼다."</p>
+                        <p class="friend-answer-analysis good">
+                            <strong>👍 좋은 점:</strong> '임시 변수'라는 핵심 전략과 '두 변수의 값을 바꾼다'는 목적을 모두 명확하게 언급했어요.
+                        </p>
+                    </div>
+                    <div class="friend-answer bad">
+                        <p class="friend-answer-text">"a는 b가 되고 b는 a가 된다."</p>
+                        <p class="friend-answer-analysis bad">
+                            <strong>🤔 아쉬운 점:</strong> 결과적으로는 맞지만, 'tmp' 변수의 역할이 드러나지 않아 과정에 대한 설명이 부족해요. 어떻게 값이 바뀌는지에 대한 설명이 추가되면 더 좋아요.
+                        </p>
+                    </div>
+                     <div class="friend-answer good">
+                        <p class="friend-answer-text">"a의 값을 tmp에 백업하고 a에 b를 넣은 뒤, b에 백업해둔 tmp 값을 넣어 두 변수의 값을 교체함."</p>
+                        <p class="friend-answer-analysis good">
+                            <strong>👍 좋은 점:</strong> '백업'이라는 표현을 사용해 tmp의 역할을 쉽게 이해시켰고, 값 교환 과정을 구체적으로 설명했어요.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section criteria-section">
+                <h2 class="section-title">📋 앞으로의 채점 기준</h2>
+                <div class="criteria-list">
+                    <div class="criteria-item">
+                        <div class="criteria-item-title">1️⃣ 간결성</div>
+                        <div class="criteria-item-desc">핵심 기능을 짧고 명확하게 표현했는가?</div>
+                    </div>
+                    <div class="criteria-item">
+                        <div class="criteria-item-title">2️⃣ 정확성</div>
+                        <div class="criteria-item-desc">코드가 실제로 하는 일과 다르게 설명하지 않았는가?</div>
+                    </div>
+                    <div class="criteria-item">
+                        <div class="criteria-item-title">3️⃣ 명확성</div>
+                        <div class="criteria-item-desc">누가 읽어도 오해 없이 이해할 수 있도록 구체적으로 설명했는가?</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="back-btn">⬅️ 이전 튜토리얼</button>
+                <button class="btn btn-primary" id="next-btn">✅ 문제 풀러 가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectOption(optionNumber) {
+            document.querySelectorAll('.feedback').forEach(el => el.style.display = 'none');
+            document.getElementById(`feedback-${optionNumber}`).style.display = 'block';
+        }
+
+        function goBack() {
+            window.location.href = '/tutorial1_5';
+        }
+
+        function goNext() {
+            window.location.href = '/problems';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem("access_token")) {
+                window.location.href = "/";
+                return;
+            }
+            document.querySelectorAll('.answer-option').forEach((option, index) => {
+                option.addEventListener('click', () => selectOption(index + 1));
+            });
+            document.getElementById('back-btn').addEventListener('click', goBack);
+            document.getElementById('next-btn').addEventListener('click', goNext);
+        });
+    </script>
+</body>
+</html>
