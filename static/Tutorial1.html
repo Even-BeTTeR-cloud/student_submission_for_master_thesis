@@ -650,7 +650,7 @@
             const predictionSection = document.getElementById('prediction-section');
             const questionSection = document.getElementById('question-section');
 
-            if (currentStep > 1 && currentStep < maxSteps) {
+            if (currentStep > 1 && currentStep < maxSteps && stepData.prediction) {
                 predictionSection.style.display = 'block';
                 questionSection.style.display = 'none';
                 showPrediction();
@@ -664,6 +664,7 @@
                 predictionSection.style.display = 'none';
                 questionSection.style.display = 'none';
                 nextBtn.disabled = false;
+                nextBtn.textContent = '다음 ➡️';
             }
         }
 
