@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>튜토리얼 1: 변수 값 교환하기</title>
+    <title>튜토리얼 1: 코드 읽기 연습</title>
     <style>
         * {
             margin: 0;
@@ -334,6 +334,16 @@
             border-color: #1565c0;
         }
 
+        .hint-box {
+            background: #fff9c4;
+            border: 2px solid #fbc02d;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #f57f17;
+        }
+
         @media (max-width: 768px) {
             .tutorial-content {
                 grid-template-columns: 1fr;
@@ -349,16 +359,16 @@
 <body>
     <div class="tutorial-container">
         <div class="tutorial-header">
-            <h1>🎓 튜토리얼 1: 변수 값 교환하기</h1>
-            <p>코드가 한 줄씩 실행될 때 어떤 일이 일어나는지 예측하며 따라가 봅시다.</p>
+            <h1>🎓 튜토리얼 1: 코드 읽기 연습</h1>
+            <p>주어진 코드를 차근차근 읽어보며 어떤 목적으로 만들어졌는지 알아봅시다.</p>
         </div>
 
         <div class="step-indicator">
-            <div class="step active" id="step-0">시작</div>
-            <div class="step inactive" id="step-1">첫째 줄</div>
-            <div class="step inactive" id="step-2">둘째 줄</div>
-            <div class="step inactive" id="step-3">셋째 줄</div>
-            <div class="step inactive" id="step-4">최종 성찰</div>
+            <div class="step active" id="step-0">코드 살펴보기</div>
+            <div class="step inactive" id="step-1">1번째 줄</div>
+            <div class="step inactive" id="step-2">2번째 줄</div>
+            <div class="step inactive" id="step-3">3번째 줄</div>
+            <div class="step inactive" id="step-4">정리하기</div>
         </div>
 
         <div class="tutorial-content">
@@ -375,7 +385,7 @@
                     </div>
                 </div>
                 <div class="step-description" id="step-description">
-                    <strong>🚀 시작:</strong> 변수 a와 b의 초기값을 설정합니다. '다음' 버튼을 눌러 시작하세요.
+                    <strong>📖 코드 살펴보기:</strong> 이 과제를 잘 해결하려면 주어진 코드를 먼저 꼼꼼히 읽어보는 것이 중요해요. a=1, b=2일 때 이 코드가 어떻게 실행되는지 함께 따라가 봅시다! '다음' 버튼을 눌러서 한 줄씩 실행해보세요!
                 </div>
             </div>
 
@@ -410,9 +420,12 @@
             </div>
 
             <div class="question-section" id="question-section" style="display: none;">
-                <div class="question-title">최종 성찰</div>
-                <p>지금까지 본 내용으로, 파란색으로 강조된 부분은 어떤 역할을 하는 것 같나요?</p>
-                <textarea class="answer-input" id="final-answer" placeholder="예시: 변수 a와 b의 값을 서로 바꾸는 역할을 합니다..."></textarea>
+                <div class="question-title">정리하기</div>
+                <p>지금까지 파악한 내용을 토대로 주어진 코드는 어떤 역할을 하는지 말해볼까요?</p>
+                <div class="hint-box">
+                    💡 <strong>힌트:</strong> a=1, b=2일 때뿐만 아니라 a와 b에 어떤 숫자가 들어가더라도 가능하도록 코드의 역할을 설명해보세요!
+                </div>
+                <textarea class="answer-input" id="final-answer" placeholder="이 코드는 ○○○하는 역할을 합니다..."></textarea>
             </div>
         </div>
     </div>
@@ -423,43 +436,43 @@
 
         const steps = [
             {
-                description: "🚀 시작: 변수 a와 b의 초기값을 설정합니다. '다음' 버튼을 눌러 시작하세요.",
+                description: "📖 코드 살펴보기: 이 과제를 잘 해결하려면 주어진 코드를 먼저 꼼꼼히 읽어보는 것이 중요해요. a=1, b=2일 때 이 코드가 어떻게 실행되는지 함께 따라가 봅시다! '다음' 버튼을 눌러서 한 줄씩 실행해보세요!",
                 line: null,
                 variables: { a: 1, b: 2, tmp: null },
                 prediction: null
             },
             {
-                description: "📦 첫째 줄: 'tmp = a'가 실행됩니다.",
+                description: "📦 1번째 줄: 'tmp = a'가 실행되었어요.",
                 line: "line-2",
                 variables: { a: 1, b: 2, tmp: 1 },
                 prediction: {
-                    question: "다음에 무슨 일이 일어날까요?",
-                    options: ["tmp의 값은 1이 된다.", "a의 값은 2가 된다.", "b의 값은 1이 된다."],
+                    question: "이번에는 어떤 일이 일어났을까요?",
+                    options: ["tmp의 값이 1이 되었다.", "a의 값이 2가 되었다.", "b의 값이 1이 되었다."],
                     answer: 0
                 }
             },
             {
-                description: "🔄 둘째 줄: 'a = b'가 실행됩니다.",
+                description: "🔄 2번째 줄: 'a = b'가 실행되었어요.",
                 line: "line-3", 
                 variables: { a: 2, b: 2, tmp: 1 },
                 prediction: {
-                    question: "다음에 무슨 일이 일어날까요?",
-                    options: ["a의 값은 2가 된다.", "b의 값은 1이 된다.", "tmp의 값은 2가 된다."],
+                    question: "이번에는 어떤 일이 일어났을까요?",
+                    options: ["a의 값이 2가 되었다.", "b의 값이 1이 되었다.", "tmp의 값이 2가 되었다."],
                     answer: 0
                 }
             },
             {
-                description: "✨ 셋째 줄: 'b = tmp'가 실행됩니다.",
+                description: "✨ 3번째 줄: 'b = tmp'가 실행되었어요.",
                 line: "line-4",
                 variables: { a: 2, b: 1, tmp: 1 },
                 prediction: {
-                    question: "다음에 무슨 일이 일어날까요?",
-                    options: ["b의 값은 1이 된다.", "a의 값은 1이 된다.", "tmp의 값은 2가 된다."],
+                    question: "마지막으로 어떤 일이 일어났을까요?",
+                    options: ["b의 값이 1이 되었다.", "a의 값이 1이 되었다.", "tmp의 값이 2가 되었다."],
                     answer: 0
                 }
             },
             {
-                description: "🤔 최종 성찰: 전체 과정을 되돌아보며 코드의 의미를 파악해봅시다.",
+                description: "🤔 정리하기: 모든 코드가 실행되었어요! 전체 과정을 되돌아보며 이 코드가 어떤 목적으로 만들어졌는지 생각해봅시다.",
                 line: null,
                 variables: { a: 2, b: 1, tmp: 1 },
                 prediction: null
