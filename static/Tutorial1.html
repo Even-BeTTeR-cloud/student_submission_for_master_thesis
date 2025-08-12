@@ -260,6 +260,17 @@
             border-left: 4px solid #667eea;
         }
 
+        /* 변수 추적기 내부의 가이드 텍스트 */
+        .guide-text {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2e7d32;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
         /* 예측 및 질문 섹션 스타일 */
         .prediction-section, .question-section {
             grid-column: span 2;
@@ -384,13 +395,15 @@
                         <span class="code-line" id="line-4">b = tmp</span>
                     </div>
                 </div>
-                <div class="step-description" id="step-description">
-                    <strong>📖 코드 살펴보기:</strong> 이 과제를 잘 해결하려면 주어진 코드를 먼저 꼼꼼히 읽어보는 것이 중요해요. a=1, b=2일 때 이 코드가 어떻게 실행되는지 함께 따라가 봅시다! '다음' 버튼을 눌러서 한 줄씩 실행해보세요!
+                <div class="step-description" id="step-description" style="display: none;">
                 </div>
             </div>
 
             <div class="variable-tracker">
                 <div class="tracker-title">변수 상태 추적</div>
+                <div class="guide-text" id="guide-text">
+                    <strong>📖 코드 살펴보기:</strong> 이 과제를 잘 해결하려면 주어진 코드를 먼저 꼼꼼히 읽어보는 것이 중요해요. a=1, b=2일 때 이 코드가 어떻게 실행되는지 함께 따라가 봅시다! '다음' 버튼을 눌러서 한 줄씩 실행해보세요!
+                </div>
                 <div class="variable-box" id="var-a">
                     <div class="variable-name">변수 a</div>
                     <div class="variable-value" id="value-a">1</div>
@@ -436,10 +449,11 @@
 
         const steps = [
             {
-                description: "📖 코드 살펴보기: 이 과제를 잘 해결하려면 주어진 코드를 먼저 꼼꼼히 읽어보는 것이 중요해요. a=1, b=2일 때 이 코드가 어떻게 실행되는지 함께 따라가 봅시다! '다음' 버튼을 눌러서 한 줄씩 실행해보세요!",
+                description: "",
                 line: null,
                 variables: { a: 1, b: 2, tmp: null },
-                prediction: null
+                prediction: null,
+                showGuide: true
             },
             {
                 description: "📦 1번째 줄: 'tmp = a'가 실행되었어요.",
@@ -449,7 +463,8 @@
                     question: "이번에는 어떤 일이 일어났을까요?",
                     options: ["tmp의 값이 1이 되었다.", "a의 값이 2가 되었다.", "b의 값이 1이 되었다."],
                     answer: 0
-                }
+                },
+                showGuide: false
             },
             {
                 description: "🔄 2번째 줄: 'a = b'가 실행되었어요.",
@@ -459,7 +474,8 @@
                     question: "이번에는 어떤 일이 일어났을까요?",
                     options: ["a의 값이 2가 되었다.", "b의 값이 1이 되었다.", "tmp의 값이 2가 되었다."],
                     answer: 0
-                }
+                },
+                showGuide: false
             },
             {
                 description: "✨ 3번째 줄: 'b = tmp'가 실행되었어요.",
@@ -469,13 +485,15 @@
                     question: "마지막으로 어떤 일이 일어났을까요?",
                     options: ["b의 값이 1이 되었다.", "a의 값이 1이 되었다.", "tmp의 값이 2가 되었다."],
                     answer: 0
-                }
+                },
+                showGuide: false
             },
             {
                 description: "🤔 정리하기: 모든 코드가 실행되었어요! 전체 과정을 되돌아보며 이 코드가 어떤 목적으로 만들어졌는지 생각해봅시다.",
                 line: null,
                 variables: { a: 2, b: 1, tmp: 1 },
-                prediction: null
+                prediction: null,
+                showGuide: false
             }
         ];
 
@@ -505,9 +523,20 @@
                 updateVariable('b', null, stepData.variables.b);
                 updateVariable('tmp', null, stepData.variables.tmp);
             }
+
+            // 가이드 텍스트와 설명 표시/숨김
+            const guideText = document.getElementById('guide-text');
+            const stepDescription = document.getElementById('step-description');
             
-            // 설명
-            document.getElementById('step-description').innerHTML = stepData.description;
+            if (stepData.showGuide) {
+                guideText.style.display = 'block';
+                stepDescription.style.display = 'none';
+            } else {
+                guideText.style.display = 'none';
+                stepDescription.style.display = 'block';
+                stepDescription.innerHTML = stepData.description;
+            }
+            
             document.getElementById('current-step-info').innerHTML = `<strong>현재 단계:</strong> ${currentStep}/${maxSteps}`;
 
             // 버튼 상태
