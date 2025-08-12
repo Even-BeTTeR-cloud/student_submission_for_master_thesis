@@ -11,6 +11,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 from contextlib import asynccontextmanager
 from collections import defaultdict
+import os
 
 # MongoDB ObjectId를 문자열로 변환하는 함수
 def serialize_doc(doc):
@@ -20,20 +21,46 @@ def serialize_doc(doc):
         return {k: serialize_doc(v) for k, v in doc.items() if k != "_id"}
     return doc
 
-# 설정
-MONGODB_URL = "mongodb+srv://mingyu4796:qwert12345@cluster0.nnr0q.mongodb.net/"
+# 설정 - 환경변수 사용
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb+srv://mingyu4796:qwert12345@cluster0.nnr0q.mongodb.net/")
 DATABASE_NAME = "Code_Reading"
 USERS_COLLECTION = "User_info"
 SUBMISSIONS_COLLECTION = "Submission"
 PROBLEMS_COLLECTION = "Question_info"
-SECRET_KEY = "Computer_Science_Education_2025_Secret"
+SECRET_KEY = os.getenv("SECRET_KEY", "Computer_Science_Education_2025_Secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# 초기화
-client = AsyncIOMotorClient(MONGODB_URL)
-db = client[DATABASE_NAME]
-app = FastAPI(title="학생 답안 제출 및 교사 관리 시스템")
+# 전역 변수로 클라이언트 관리
+client = None
+db = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 시작 시 MongoDB 연결
+    global client, db
+    try:
+        client = AsyncIOMotorClient(MONGODB_URL)
+        db = client[DATABASE_NAME]
+        # 연결 테스트
+        await client.admin.command('ping')
+        print("✅ MongoDB 연결 성공")
+    except Exception as e:
+        print(f"❌ MongoDB 연결 실패: {e}")
+        raise
+    
+    yield
+    
+    # 종료 시 연결 정리
+    if client:
+        client.close()
+        print("📦 MongoDB 연결 종료")
+
+# FastAPI 앱 생성 - lifespan 추가
+app = FastAPI(
+    title="학생 답안 제출 및 교사 관리 시스템",
+    lifespan=lifespan
+)
 security = HTTPBearer()
 
 # Pydantic 모델
@@ -74,6 +101,16 @@ async def get_current_teacher(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="교사 권한이 필요합니다.")
     return user
 
+# 헬스체크 엔드포인트 추가
+@app.get("/health")
+async def health_check():
+    try:
+        # MongoDB 연결 상태 확인
+        await client.admin.command('ping')
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
 # --- API 엔드포인트 ---
 @app.post("/api/login")
 async def login(req: LoginRequest):
@@ -105,6 +142,35 @@ async def submit_answer(submission: SubmissionRequest, user: dict = Depends(get_
         upsert=True
     )
     return {"message": "답안이 성공적으로 제출되었습니다."}
+
+# API 엔드포인트 추가 (누락된 부분들)
+@app.get("/api/problems")
+async def get_problems(user: dict = Depends(get_current_user)):
+    problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
+    return [{"problem_id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}"), "max_score": p.get('max_score', 100)} for p in problems]
+
+@app.get("/api/problems/{problem_id}")
+async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
+    qid = int(problem_id[1:]) if problem_id.startswith('q') else None
+    if not qid:
+        raise HTTPException(status_code=400, detail="잘못된 문제 ID입니다.")
+    
+    problem = await db[PROBLEMS_COLLECTION].find_one({"Question_id": qid})
+    if not problem:
+        raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다.")
+    
+    return {
+        "problem_id": problem_id,
+        "title": problem.get('title', f"문제 {qid}"),
+        "description": problem.get('description', ''),
+        "code": problem.get('code', ''),
+        "max_score": problem.get('max_score', 100)
+    }
+
+@app.get("/api/my-submissions")
+async def get_my_submissions(user: dict = Depends(get_current_user)):
+    submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": user["ID"]}).to_list(None)
+    return [serialize_doc(sub) for sub in submissions]
 
 # 교사용 API
 @app.get("/api/teacher/statistics")
@@ -165,9 +231,21 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
 
 # --- 페이지 라우팅 ---
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/")
-async def root(): return create_no_cache_file_response("static/login.html")
+async def root(): 
+    return create_no_cache_file_response("static/login.html")
+
 @app.get("/teacher/{page:path}")
-async def teacher_pages(page: str): return create_no_cache_file_response(f"static/teacher_{page}.html")
+async def teacher_pages(page: str): 
+    return create_no_cache_file_response(f"static/teacher_{page}.html")
+
 @app.get("/{page:path}")
-async def student_pages(page: str): return create_no_cache_file_response(f"static/{page}.html")
+async def student_pages(page: str): 
+    return create_no_cache_file_response(f"static/{page}.html")
+
+# 서버 시작 부분 추가
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("fastapi_main:app", host="0.0.0.0", port=port, reload=False)
