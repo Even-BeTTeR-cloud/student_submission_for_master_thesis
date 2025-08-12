@@ -251,19 +251,19 @@ async def root():
 # 학생용 페이지들
 @app.get("/tutorial0")
 async def tutorial0(): 
-    return create_no_cache_file_response("static/tutorial0.html")
+    return create_no_cache_file_response("static/Tutorial0.html")
 
 @app.get("/tutorial1")
 async def tutorial1(): 
-    return create_no_cache_file_response("static/tutorial1.html")
+    return create_no_cache_file_response("static/Tutorial1.html")
 
 @app.get("/tutorial1_5")
 async def tutorial1_5(): 
-    return create_no_cache_file_response("static/tutorial1_5.html")
+    return create_no_cache_file_response("static/Tutorial1_5.html")
 
 @app.get("/tutorial2")
 async def tutorial2(): 
-    return create_no_cache_file_response("static/tutorial2.html")
+    return create_no_cache_file_response("static/Tutorial2.html")
 
 @app.get("/problems")
 async def problems(): 
