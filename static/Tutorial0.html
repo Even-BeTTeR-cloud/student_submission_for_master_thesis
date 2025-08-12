@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>튜토리얼: 코딩 공부 시작하기</title>
+    <title>튜토리얼: 새로운 코딩 학습 방법</title>
     <style>
         * {
             margin: 0;
@@ -34,8 +34,9 @@
         .slide {
             display: none;
             padding: 50px 60px;
-            text-align: center;
+            text-align: left;
             animation: fadeIn 0.8s;
+            min-height: 500px;
         }
 
         @keyframes fadeIn {
@@ -50,33 +51,69 @@
         .slide h1 {
             font-size: 36px;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
         .slide p {
             font-size: 20px;
             color: #555;
-            line-height: 1.6;
-            margin-bottom: 15px;
+            line-height: 1.8;
+            margin-bottom: 20px;
         }
         
         .slide ul {
-            list-style-position: inside;
-            text-align: left;
-            max-width: 500px;
-            margin: 20px auto;
-            font-size: 18px;
-            color: #444;
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
         }
 
         .slide li {
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            font-size: 18px;
+            color: #444;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .slide li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #667eea;
+            font-weight: bold;
         }
 
         .slide .highlight {
             color: #667eea;
             font-weight: bold;
+        }
+
+        .slide .quote {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            font-style: italic;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 22px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .ready-question {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 28px;
+            color: #ff6b6b;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .navigation-buttons {
@@ -120,37 +157,65 @@
             width: 0;
             transition: width 0.3s;
         }
+
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="slideshow-container">
         <div id="slide-1" class="slide active">
-            <h1>코딩, 어떻게 공부해야 할까요?</h1>
-            <p>많은 학생들이 코드를 <span class="highlight">'따라 치는 것'</span>에만 익숙해져 있습니다.</p>
-            <p>하지만 진짜 중요한 것은 코드의 <span class="highlight">의미를 이해</span>하고, <span class="highlight">스스로 작성</span>할 수 있는 능력입니다.</p>
+            <div class="slide-number">1 / 4</div>
+            <h1>새로운 코딩 학습 방법</h1>
+            <ul>
+                <li>지금까지 우리는 <span class="highlight">코드의 실행 결과를 계산하거나</span> <span class="highlight">직접 코드를 작성하는</span> 교육에 익숙했습니다.</li>
+                <li>하지만 이번에는 <span class="highlight">전혀 다른 접근</span>을 해보려고 합니다.</li>
+                <li>오늘은 이미 완성된 코드를 <span class="highlight">읽고 분석하는</span> 능력을 기를 것입니다.</li>
+            </ul>
         </div>
 
         <div id="slide-2" class="slide">
-            <h1>코드도 패턴이 있어요</h1>
-            <p>숙련된 개발자는 매번 새로운 코드를 발명하지 않습니다.</p>
-            <p>자주 사용되는 <span class="highlight">코드 패턴</span>을 이해하고, 이를 활용해 문제를 해결합니다.</p>
-            <p>따라서 <span class="highlight">"코드를 읽는 것"</span>은 개발자의 <span class="highlight">"의도를 파악하는 것"</span>과 같습니다.</p>
+            <div class="slide-number">2 / 4</div>
+            <h1>프로그래머의 사고과정</h1>
+            <ul>
+                <li>프로그램을 작성할 때는 항상 명확한 목적이 있습니다.</li>
+            </ul>
+            <div class="quote">
+                "~~을 위한 프로그램을 만들어야지!"
+            </div>
+            <p style="margin-top: 15px; font-size: 18px;">라고 생각하며 코딩을 시작하죠.</p>
+            <ul>
+                <li>즉, 모든 코드에는 작성자의 <span class="highlight">의도와 목적</span>이 담겨 있습니다.</li>
+            </ul>
         </div>
 
         <div id="slide-3" class="slide">
-            <h1>'EiPE' 과제란?</h1>
-            <p>EiPE(Explain in Plain English) 과제는 바로 이 <span class="highlight">'코드 읽기'</span> 능력을 기르기 위해 설계되었습니다.</p>
+            <div class="slide-number">3 / 4</div>
+            <h1>코드 독자의 관점</h1>
             <ul>
-                <li>제시된 코드에서 <span class="highlight">강조된 부분</span>이 어떤 역할을 하는지 파악하는 것이 목표입니다.</li>
-                <li>이 훈련은 실제 프로그래밍에서 마주치는 복잡한 코드를 이해하는 데 큰 도움이 됩니다.</li>
+                <li>완성된 프로그램을 읽는 독자들은 어떻게 접근할까요?</li>
+                <li>줄글로 쓰여진 코드 속에서 작성자의 <span class="highlight">'의도'를 파악</span>하려고 노력합니다.</li>
+                <li>마치 소설을 읽으며 작가의 메시지를 찾는 것처럼 말이죠.</li>
             </ul>
         </div>
 
         <div id="slide-4" class="slide">
-            <h1>실습 준비하기</h1>
-            <p>이제 간단한 실습을 통해 코드 읽기 연습을 시작하겠습니다.</p>
-            <p>다음 버튼을 누르면 첫 번째 튜토리얼이 시작됩니다.</p>
-            <p class="highlight">준비되셨나요?</p>
+            <div class="slide-number">4 / 4</div>
+            <h1>EiPE 과제의 목표</h1>
+            <ul>
+                <li>이번 과제는 <span class="highlight">'이미 완성된 코드를 충분히 읽고'</span>, <span class="highlight">'어떤 목적이나 의도를 가지고 프로그램을 작성했는지'</span> 유추하는 훈련입니다.</li>
+                <li>코드 작성 능력만큼이나 중요한 <span class="highlight">코드 이해 능력</span>을 기르는 것이 목표입니다.</li>
+            </ul>
+            <div class="ready-question">준비되셨나요?</div>
         </div>
 
         <div class="navigation-buttons">
