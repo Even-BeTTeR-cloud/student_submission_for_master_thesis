@@ -64,8 +64,13 @@ app = FastAPI(
 security = HTTPBearer()
 
 # Pydantic 모델
-class LoginRequest(BaseModel): user_id: str; password: str
-class SubmissionRequest(BaseModel): problem_id: str; answer: str
+class LoginRequest(BaseModel): 
+    user_id: str
+    password: str
+
+class SubmissionRequest(BaseModel): 
+    problem_id: str
+    answer: str
 
 # 헬퍼 함수
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -101,17 +106,18 @@ async def get_current_teacher(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="교사 권한이 필요합니다.")
     return user
 
-# 헬스체크 엔드포인트 추가
+# --- API 엔드포인트들 먼저 정의 ---
+
+# 헬스체크 엔드포인트
 @app.get("/health")
 async def health_check():
     try:
-        # MongoDB 연결 상태 확인
         await client.admin.command('ping')
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
-# --- API 엔드포인트 ---
+# 로그인 API
 @app.post("/api/login")
 async def login(req: LoginRequest):
     uid = req.user_id
@@ -129,26 +135,13 @@ async def login(req: LoginRequest):
     token = create_access_token(data={"sub": str(user["ID"]), "user_type": user_type}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": token, "token_type": "bearer", "user_name": name, "user_type": user_type}
 
-@app.post("/api/submit")
-async def submit_answer(submission: SubmissionRequest, user: dict = Depends(get_current_user)):
-    qid = int(submission.problem_id[1:]) if submission.problem_id.startswith('q') else None
-    if not qid or not await db[PROBLEMS_COLLECTION].find_one({"Question_id": qid}):
-        raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다.")
-    
-    await db[SUBMISSIONS_COLLECTION].replace_one(
-        {"user_id": user["ID"], "problem_id": submission.problem_id},
-        {"user_id": user["ID"], "Hash_ID": user.get("Hash_ID"), "problem_id": submission.problem_id, 
-         "question_id": qid, "answer": submission.answer, "submitted_at": datetime.utcnow()},
-        upsert=True
-    )
-    return {"message": "답안이 성공적으로 제출되었습니다."}
-
-# API 엔드포인트 추가 (누락된 부분들)
+# 문제 목록 API (누락되었던 부분)
 @app.get("/api/problems")
 async def get_problems(user: dict = Depends(get_current_user)):
     problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
     return [{"problem_id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}"), "max_score": p.get('max_score', 100)} for p in problems]
 
+# 개별 문제 API (누락되었던 부분)
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     qid = int(problem_id[1:]) if problem_id.startswith('q') else None
@@ -167,12 +160,28 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
         "max_score": problem.get('max_score', 100)
     }
 
+# 내 제출 내역 API (누락되었던 부분)
 @app.get("/api/my-submissions")
 async def get_my_submissions(user: dict = Depends(get_current_user)):
     submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": user["ID"]}).to_list(None)
     return [serialize_doc(sub) for sub in submissions]
 
-# 교사용 API
+# 답안 제출 API
+@app.post("/api/submit")
+async def submit_answer(submission: SubmissionRequest, user: dict = Depends(get_current_user)):
+    qid = int(submission.problem_id[1:]) if submission.problem_id.startswith('q') else None
+    if not qid or not await db[PROBLEMS_COLLECTION].find_one({"Question_id": qid}):
+        raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다.")
+    
+    await db[SUBMISSIONS_COLLECTION].replace_one(
+        {"user_id": user["ID"], "problem_id": submission.problem_id},
+        {"user_id": user["ID"], "Hash_ID": user.get("Hash_ID"), "problem_id": submission.problem_id, 
+         "question_id": qid, "answer": submission.answer, "submitted_at": datetime.utcnow()},
+        upsert=True
+    )
+    return {"message": "답안이 성공적으로 제출되었습니다."}
+
+# 교사용 API들
 @app.get("/api/teacher/statistics")
 async def get_teacher_statistics(_: dict = Depends(get_current_teacher)):
     students_count = await db[USERS_COLLECTION].count_documents({"IsTeacher": 0})
@@ -229,20 +238,49 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
         "problems": [{"id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}")} for p in problems]
     }
 
-# --- 페이지 라우팅 ---
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# --- 정적 파일 및 페이지 라우팅 ---
 
+# 정적 파일 먼저 마운트 (중요: html=True 옵션 포함)
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
+
+# 특정 HTML 페이지 라우팅 (API 이후에 정의)
 @app.get("/")
 async def root(): 
     return create_no_cache_file_response("static/login.html")
 
-@app.get("/teacher/{page:path}")
-async def teacher_pages(page: str): 
-    return create_no_cache_file_response(f"static/teacher_{page}.html")
+# 학생용 페이지들
+@app.get("/tutorial0")
+async def tutorial0(): 
+    return create_no_cache_file_response("static/tutorial0.html")
 
-@app.get("/{page:path}")
-async def student_pages(page: str): 
-    return create_no_cache_file_response(f"static/{page}.html")
+@app.get("/tutorial1")
+async def tutorial1(): 
+    return create_no_cache_file_response("static/tutorial1.html")
+
+@app.get("/tutorial1_5")
+async def tutorial1_5(): 
+    return create_no_cache_file_response("static/tutorial1_5.html")
+
+@app.get("/tutorial2")
+async def tutorial2(): 
+    return create_no_cache_file_response("static/tutorial2.html")
+
+@app.get("/problems")
+async def problems(): 
+    return create_no_cache_file_response("static/problems.html")
+
+@app.get("/problem/{problem_id}")
+async def problem_page(problem_id: str): 
+    return create_no_cache_file_response("static/problem.html")
+
+# 교사용 페이지들
+@app.get("/teacher/dashboard")
+async def teacher_dashboard(): 
+    return create_no_cache_file_response("static/teacher_dashboard.html")
+
+@app.get("/teacher/class/{class_id}")
+async def teacher_class(class_id: str): 
+    return create_no_cache_file_response("static/teacher_class.html")
 
 # 서버 시작 부분 추가
 if __name__ == "__main__":
