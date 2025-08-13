@@ -61,6 +61,34 @@
         background: rgba(255, 255, 255, 0.3);
       }
 
+      /* 브레드크럼 네비게이션 */
+      .breadcrumb {
+        background: #f8f9fa;
+        padding: 12px 20px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+      }
+
+      .breadcrumb a {
+        color: #667eea;
+        text-decoration: none;
+        margin-right: 5px;
+      }
+
+      .breadcrumb a:hover {
+        text-decoration: underline;
+      }
+
+      .breadcrumb .separator {
+        margin: 0 8px;
+        color: #6c757d;
+      }
+
+      .breadcrumb .current {
+        color: #333;
+        font-weight: bold;
+      }
+
       .container {
         max-width: 1200px;
         margin: 30px auto;
@@ -212,6 +240,13 @@
       </div>
     </div>
 
+    <!-- 브레드크럼 네비게이션 -->
+    <div class="breadcrumb">
+      <a href="/tutorial0">튜토리얼</a>
+      <span class="separator">></span>
+      <span class="current">문제 목록</span>
+    </div>
+
     <div class="container">
       <h2 class="section-title">문제 목록</h2>
       <p class="section-subtitle">아래 문제들을 하나씩 해결해봐요!</p>
@@ -224,6 +259,36 @@
     <script>
       console.log("📋 Problems 페이지 로드됨");
 
+      // 인증 및 흐름 관리 함수들
+      function checkAuthAndRedirect() {
+        const token = localStorage.getItem('access_token');
+        const userType = localStorage.getItem('user_type');
+        
+        if (!token) {
+          window.location.replace('/');
+          return false;
+        }
+        
+        if (userType === 'teacher') {
+          window.location.replace('/teacher/dashboard');
+          return false;
+        }
+        
+        return true;
+      }
+
+      function checkTutorialStatus() {
+        const userType = localStorage.getItem('user_type');
+        const tutorialCompleted = localStorage.getItem('tutorial_completed');
+        
+        if (userType === 'student' && tutorialCompleted !== 'true') {
+          // 튜토리얼을 완료하지 않았으면 첫 번째 튜토리얼로
+          window.location.replace('/tutorial0');
+          return false;
+        }
+        return true;
+      }
+
       // 인증 확인
       function checkAuth() {
         const token = localStorage.getItem("access_token");
@@ -235,15 +300,12 @@
           return false;
         }
 
-        // --- 수정된 부분 시작 ---
         const userNameElement = document.getElementById("userName");
-        if (userNameElement) { // userNameElement가 null이 아닌지 확인
+        if (userNameElement) {
             userNameElement.textContent = userName || "사용자";
         } else {
             console.warn("⚠️ 'userName' 요소를 찾을 수 없습니다.");
-            // 오류가 발생했지만, 앱의 핵심 기능은 아니므로 진행할 수 있도록 합니다.
         }
-        // --- 수정된 부분 끝 ---
 
         console.log("✅ 토큰 확인됨, Problems 페이지 진행");
         return true;
@@ -410,7 +472,7 @@
 
       // 문제 풀기
       function solveProblem(problemId) {
-        console.log(`📝 문제 ${problemId} 풀기 시작`);
+        console.log(`🔍 문제 ${problemId} 풀기 시작`);
         window.location.href = `/problem/${problemId}`;
       }
 
@@ -418,6 +480,8 @@
       document.addEventListener("DOMContentLoaded", function () {
         console.log("📋 Problems 페이지 초기화 시작");
         
+        if (!checkAuthAndRedirect()) return;
+        if (!checkTutorialStatus()) return;
         if (!checkAuth()) return;
 
         // 이벤트 리스너 등록
