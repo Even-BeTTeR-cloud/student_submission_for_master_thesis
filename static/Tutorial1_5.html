@@ -97,57 +97,6 @@
             margin-right: 10px;
         }
 
-        .code-display {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 30px auto;
-            max-width: 700px;
-            border: 2px solid #e9ecef;
-        }
-
-        .code-display .code-block {
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 25px;
-            font-family: "Consolas", "Monaco", "Courier New", monospace;
-            font-size: 18px;
-            line-height: 2;
-            text-align: left;
-        }
-
-        .code-display .code-line {
-            display: block;
-            padding: 8px 12px;
-            margin: 4px 0;
-            border-radius: 6px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-        }
-
-        .code-display .highlighted-section {
-            background: rgba(76, 175, 80, 0.1);
-            border: 2px dashed #4CAF50;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            position: relative;
-        }
-
-        .code-display .highlighted-section::before {
-            content: "🎯 핵심 부분";
-            position: absolute;
-            top: -12px;
-            left: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
         .overview-description {
             background: #e8f5e9;
             border-radius: 12px;
@@ -490,6 +439,24 @@
     <script>
         let currentStep = 0;
         let tutorialStarted = false;
+
+        // 인증 및 흐름 관리 함수들
+        function checkAuthAndRedirect() {
+            const token = localStorage.getItem('access_token');
+            const userType = localStorage.getItem('user_type');
+            
+            if (!token) {
+                window.location.replace('/');
+                return false;
+            }
+            
+            if (userType === 'teacher') {
+                window.location.replace('/teacher/dashboard');
+                return false;
+            }
+            
+            return true;
+        }
         
         const steps = [
             // 0단계: 문제 이해하기
@@ -697,8 +664,8 @@
                 currentStep++;
                 updateUI();
             } else {
-                // 다음 튜토리얼로 실제 이동
-                window.location.href = 'tutorial2.html';
+                // 다음 튜토리얼로 실제 이동 (수정된 URL)
+                window.location.href = '/tutorial2';
             }
         }
 
@@ -710,6 +677,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuthAndRedirect()) return;
+            
             setupStepIndicator();
             document.getElementById('next-btn').addEventListener('click', nextStep);
             document.getElementById('prev-btn').addEventListener('click', prevStep);
