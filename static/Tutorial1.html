@@ -548,6 +548,24 @@
         const maxSteps = 4;
         let tutorialStarted = false;
 
+        // 인증 및 흐름 관리 함수들
+        function checkAuthAndRedirect() {
+            const token = localStorage.getItem('access_token');
+            const userType = localStorage.getItem('user_type');
+            
+            if (!token) {
+                window.location.replace('/');
+                return false;
+            }
+            
+            if (userType === 'teacher') {
+                window.location.replace('/teacher/dashboard');
+                return false;
+            }
+            
+            return true;
+        }
+
         const steps = [
             {
                 description: "",
@@ -727,8 +745,8 @@
                 currentStep++;
                 updateUI();
             } else {
-                // 다음 튜토리얼로 실제 이동
-                window.location.href = 'tutorial1_5.html';
+                // 다음 튜토리얼로 실제 이동 (수정된 URL)
+                window.location.href = '/tutorial1.5';
             }
         }
 
@@ -740,6 +758,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuthAndRedirect()) return;
+            
             document.getElementById('next-btn').addEventListener('click', nextStep);
             document.getElementById('prev-btn').addEventListener('click', prevStep);
         });
