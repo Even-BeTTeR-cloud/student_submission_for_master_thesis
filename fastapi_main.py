@@ -135,13 +135,13 @@ async def login(req: LoginRequest):
     token = create_access_token(data={"sub": str(user["ID"]), "user_type": user_type}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": token, "token_type": "bearer", "user_name": name, "user_type": user_type}
 
-# 문제 목록 API (누락되었던 부분)
+# 문제 목록 API
 @app.get("/api/problems")
 async def get_problems(user: dict = Depends(get_current_user)):
     problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
     return [{"problem_id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}"), "max_score": p.get('max_score', 100)} for p in problems]
 
-# 개별 문제 API (누락되었던 부분)
+# 개별 문제 API
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     qid = int(problem_id[1:]) if problem_id.startswith('q') else None
@@ -160,7 +160,7 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
         "max_score": problem.get('max_score', 100)
     }
 
-# 내 제출 내역 API (누락되었던 부분)
+# 내 제출 내역 API
 @app.get("/api/my-submissions")
 async def get_my_submissions(user: dict = Depends(get_current_user)):
     submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": user["ID"]}).to_list(None)
@@ -238,17 +238,17 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
         "problems": [{"id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}")} for p in problems]
     }
 
-# --- 정적 파일 및 페이지 라우팅 ---
+# --- 정적 파일 및 페이지 라우팅 (수정됨) ---
 
-# 정적 파일 먼저 마운트 (중요: html=True 옵션 포함)
+# 정적 파일 먼저 마운트
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
-# 특정 HTML 페이지 라우팅 (API 이후에 정의)
+# 특정 HTML 페이지 라우팅 (수정된 경로들)
 @app.get("/")
 async def root(): 
     return create_no_cache_file_response("static/login.html")
 
-# 학생용 페이지들
+# 학생용 페이지들 (수정된 라우팅)
 @app.get("/tutorial0")
 async def tutorial0(): 
     return create_no_cache_file_response("static/Tutorial0.html")
@@ -257,7 +257,7 @@ async def tutorial0():
 async def tutorial1(): 
     return create_no_cache_file_response("static/Tutorial1.html")
 
-@app.get("/tutorial1_5")
+@app.get("/tutorial1.5")  # 수정: tutorial1_5 -> tutorial1.5
 async def tutorial1_5(): 
     return create_no_cache_file_response("static/Tutorial1_5.html")
 
