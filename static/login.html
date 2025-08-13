@@ -136,6 +136,7 @@
     </div>
 
     <script>
+      // 페이지 로드 시 모든 저장소 초기화
       localStorage.clear();
       sessionStorage.clear();
 
@@ -165,9 +166,11 @@
             localStorage.setItem("user_name", data.user_name);
             localStorage.setItem("user_type", data.user_type);
 
+            // 사용자 타입별 적절한 페이지로 리다이렉션
             if (data.user_type === "teacher") {
               window.location.replace("/teacher/dashboard");
             } else {
+              // 학생은 항상 튜토리얼부터 시작 (튜토리얼 완료 상태는 problems.html에서 확인)
               window.location.replace("/tutorial0");
             }
           } else {
