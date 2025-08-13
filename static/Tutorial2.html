@@ -251,20 +251,45 @@
     </div>
 
     <script>
+        // 인증 및 흐름 관리 함수들
+        function checkAuthAndRedirect() {
+            const token = localStorage.getItem('access_token');
+            const userType = localStorage.getItem('user_type');
+            
+            if (!token) {
+                window.location.replace('/');
+                return false;
+            }
+            
+            if (userType === 'teacher') {
+                window.location.replace('/teacher/dashboard');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function markTutorialCompleted() {
+            localStorage.setItem('tutorial_completed', 'true');
+        }
+
         function selectOption(optionNumber) {
             document.querySelectorAll('.feedback').forEach(el => el.style.display = 'none');
             document.getElementById(`feedback-${optionNumber}`).style.display = 'block';
         }
 
         function goBack() {
-            window.location.href = 'tutorial1_5.html';
+            window.location.href = '/tutorial1.5';  // 수정된 URL
         }
 
         function goNext() {
-            window.location.href = 'problems.html';
+            markTutorialCompleted();  // 튜토리얼 완료 상태 저장
+            window.location.href = '/problems';    // 수정된 URL
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuthAndRedirect()) return;
+            
             document.querySelectorAll('.answer-option').forEach((option, index) => {
                 option.addEventListener('click', () => selectOption(index + 1));
             });
