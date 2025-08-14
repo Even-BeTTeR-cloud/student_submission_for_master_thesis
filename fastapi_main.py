@@ -156,7 +156,7 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
         "problem_id": problem_id,
         "title": problem.get('title', f"문제 {qid}"),
         "description": problem.get('description', ''),
-        "code": problem.get('code', ''),
+        "code": problem.get('Code', ''),
         "max_score": problem.get('max_score', 100)
     }
 
