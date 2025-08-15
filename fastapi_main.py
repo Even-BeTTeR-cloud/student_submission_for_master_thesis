@@ -56,13 +56,20 @@ async def lifespan(app: FastAPI):
     # 시작 시 MongoDB 연결
     global client, db
     try:
+        print(f"🔄 MongoDB 연결 시도: {MONGODB_URL[:50]}...")
         client = AsyncIOMotorClient(MONGODB_URL)
         db = client[DATABASE_NAME]
         # 연결 테스트
         await client.admin.command('ping')
         print("✅ MongoDB 연결 성공")
+        
+        # 컬렉션 존재 확인
+        collections = await db.list_collection_names()
+        print(f"📊 사용 가능한 컬렉션: {collections}")
+        
     except Exception as e:
         print(f"❌ MongoDB 연결 실패: {e}")
+        print(f"🔧 연결 URL: {MONGODB_URL[:50]}...")
         raise
     
     yield
