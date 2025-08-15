@@ -267,48 +267,52 @@ async def get_teacher_classes(_: dict = Depends(get_current_teacher)):
     students = await db[USERS_COLLECTION].find({"IsTeacher": 0}).to_list(None)
     submissions = await db[SUBMISSIONS_COLLECTION].find({}).to_list(None)
     
+    print(f"총 학생 수: {len(students)}")  # 디버깅용
+    
     class_data = defaultdict(lambda: {"total": 0, "submitted_ids": set()})
     
     # 모든 학생을 반별로 분류 (테스트 계정 포함)
     for s in students:
         pid = parse_student_id(s['ID'])
         if pid:  # 유효한 ID 형식인 경우
-            # 25학년은 제외하고, 나머지는 모두 1학년으로 표시
-            if pid['grade'] == 25:
-                continue  # 25학년은 제외
-            class_key = f"1-{pid['class']}"  # 모든 학년을 1학년으로 표시
+            print(f"학생 ID: {s['ID']}, 파싱 결과: {pid}")  # 디버깅용
+            
+            # 모든 학년을 1학년으로 표시 (25학년 포함)
+            class_key = f"1-{pid['class']}"
             class_data[class_key]["total"] += 1
 
     # 제출 내역을 반별로 분류
     for sub in submissions:
         pid = parse_student_id(sub['user_id'])
         if pid:  # 유효한 ID 형식인 경우
-            # 25학년은 제외하고, 나머지는 모두 1학년으로 표시
-            if pid['grade'] == 25:
-                continue  # 25학년은 제외
-            class_key = f"1-{pid['class']}"  # 모든 학년을 1학년으로 표시
+            # 모든 학년을 1학년으로 표시 (25학년 포함)
+            class_key = f"1-{pid['class']}"
             class_data[class_key]["submitted_ids"].add(sub['user_id'])
 
-    # 반별로 정렬 (1반부터 13반까지 오름차순)
+    print(f"반별 데이터: {dict(class_data)}")  # 디버깅용
+
+    # 반별로 정렬 (1반부터 오름차순)
     sorted_classes = sorted([
         {"class_id": cid, "class_name": f"1학년 {cid.split('-')[1]}반",
          "total_students": data['total'], "submitted_students": len(data['submitted_ids']),
          "submission_rate": round(len(data['submitted_ids']) / data['total'] * 100, 2) if data['total'] > 0 else 0}
-        for cid, data in class_data.items()
+        for cid, data in class_data.items() if data['total'] > 0  # 학생이 있는 반만 포함
     ], key=lambda x: int(x['class_id'].split('-')[1]))  # 반 번호로 정렬
     
+    print(f"정렬된 반 목록: {sorted_classes}")  # 디버깅용
     return sorted_classes
 
 @app.get("/api/teacher/class/{class_id}")
 async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher)):
     try:
-        # class_id는 "1-XX" 형태이지만 실제 DB는 다른 학년일 수 있음
+        # class_id는 "1-XX" 형태
         grade_display, class_num = map(int, class_id.split('-'))
         
-        # 실제 DB에서는 여러 학년의 해당 반을 모두 조회 (25학년 제외)
-        # 예: 1-01 요청시 -> 01반, 02반, 03반, ... 24반의 01반을 모두 조회
+        # 실제 DB에서는 모든 학년의 해당 반을 조회 (25학년 포함)
         students = []
-        for grade in range(1, 25):  # 1학년부터 24학년까지 (25학년 제외)
+        
+        # 더 넓은 범위로 검색 (1학년부터 30학년까지)
+        for grade in range(1, 31):  # 1학년부터 30학년까지
             id_start = int(f"{grade:02d}{class_num:02d}00")
             id_end = int(f"{grade:02d}{class_num:02d}99")
             
@@ -321,6 +325,8 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
             
     except ValueError:
         raise HTTPException(status_code=400, detail="잘못된 반 ID 형식입니다.")
+
+    print(f"반 {class_id}의 학생 수: {len(students)}")  # 디버깅용
 
     student_ids = [s['ID'] for s in students]
     
@@ -345,6 +351,7 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
                 "name": display_name, 
                 "number": pid['number'],
                 "is_test_account": pid.get('is_test_account', False),
+                "original_grade": pid['grade'],  # 디버깅용으로 원래 학년 정보 추가
                 "submissions": {f"q{p['Question_id']}": subs_by_student[s['ID']].get(f"q{p['Question_id']}", {}) for p in problems}
             })
 
