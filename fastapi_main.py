@@ -84,6 +84,46 @@ def parse_student_id(student_id: int) -> dict:
     s = str(student_id)
     return {"grade": int(s[:2]), "class": int(s[2:4]), "number": int(s[4:])} if len(s) == 6 else {}
 
+# 코드 하이라이팅 처리 함수 추가
+def process_code_highlighting(code: str, highlight_start: Optional[int], highlight_end: Optional[int]) -> str:
+    """
+    코드에서 지정된 라인 범위를 하이라이팅하여 HTML로 반환
+    """
+    if not code:
+        return ""
+    
+    lines = code.split('\n')
+    
+    # 하이라이팅 범위가 지정되지 않은 경우 원본 반환
+    if highlight_start is None or highlight_end is None:
+        return '\n'.join(f'<span class="code-line">{line}</span>' for line in lines)
+    
+    # 1-based index를 0-based로 변환하고 범위 검증
+    start_idx = max(0, highlight_start - 1)
+    end_idx = min(len(lines) - 1, highlight_end - 1)
+    
+    result_lines = []
+    for i, line in enumerate(lines):
+        if start_idx <= i <= end_idx:
+            # 하이라이팅 구간
+            if i == start_idx and i == end_idx:
+                # 단일 라인 하이라이팅
+                result_lines.append(f'<div class="highlighted-section"><span class="code-line">{line}</span></div>')
+            elif i == start_idx:
+                # 하이라이팅 시작
+                result_lines.append(f'<div class="highlighted-section"><span class="code-line">{line}</span>')
+            elif i == end_idx:
+                # 하이라이팅 끝
+                result_lines.append(f'<span class="code-line">{line}</span></div>')
+            else:
+                # 하이라이팅 중간
+                result_lines.append(f'<span class="code-line">{line}</span>')
+        else:
+            # 일반 라인
+            result_lines.append(f'<span class="code-line">{line}</span>')
+    
+    return '\n'.join(result_lines)
+
 # 인증 및 권한
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     exc = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="로그인이 필요합니다", headers={"WWW-Authenticate": "Bearer"})
@@ -141,7 +181,7 @@ async def get_problems(user: dict = Depends(get_current_user)):
     problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
     return [{"problem_id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}"), "max_score": p.get('max_score', 100)} for p in problems]
 
-# 개별 문제 API
+# 개별 문제 API - 수정된 버전
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     qid = int(problem_id[1:]) if problem_id.startswith('q') else None
@@ -152,11 +192,22 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     if not problem:
         raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다.")
     
+    # MongoDB 컬럼명에 맞게 수정
+    raw_code = problem.get('Code', '')
+    highlight_start = problem.get('Highlight_Start_Line')
+    highlight_end = problem.get('Highlight_End_Line')
+    
+    # 코드 하이라이팅 처리
+    processed_code = process_code_highlighting(raw_code, highlight_start, highlight_end)
+    
     return {
         "problem_id": problem_id,
         "title": problem.get('title', f"문제 {qid}"),
-        "description": problem.get('description', ''),
-        "code": problem.get('Code', ''),
+        "description": problem.get('Question Description', ''),  # 실제 MongoDB 컬럼명 사용
+        "code": processed_code,  # 하이라이팅 처리된 코드
+        "raw_code": raw_code,  # 원본 코드도 함께 전송 (필요시 사용)
+        "highlight_start": highlight_start,
+        "highlight_end": highlight_end,
         "max_score": problem.get('max_score', 100)
     }
 
