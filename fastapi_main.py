@@ -80,11 +80,32 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def create_no_cache_file_response(file_path: str) -> FileResponse:
     return FileResponse(file_path, headers={"Cache-Control": "no-cache, no-store", "Pragma": "no-cache", "Expires": "0"})
 
+# 수정된 parse_student_id 함수 - 테스트 계정(끝자리 00) 지원
 def parse_student_id(student_id: int) -> dict:
     s = str(student_id)
-    return {"grade": int(s[:2]), "class": int(s[2:4]), "number": int(s[4:])} if len(s) == 6 else {}
+    if len(s) == 6:
+        grade = int(s[:2])
+        class_num = int(s[2:4])
+        number = int(s[4:])
+        
+        # 끝자리가 00인 경우 테스트 계정으로 처리
+        if number == 0:
+            return {
+                "grade": grade, 
+                "class": class_num, 
+                "number": 0,  # 테스트 계정은 번호 0
+                "is_test_account": True
+            }
+        else:
+            return {
+                "grade": grade, 
+                "class": class_num, 
+                "number": number,
+                "is_test_account": False
+            }
+    return {}
 
-# 코드 하이라이팅 처리 함수 추가
+# 코드 하이라이팅 처리 함수
 def process_code_highlighting(code: str, highlight_start: Optional[int], highlight_end: Optional[int]) -> str:
     """
     코드에서 지정된 라인 범위를 하이라이팅하여 HTML로 반환
@@ -146,7 +167,7 @@ async def get_current_teacher(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="교사 권한이 필요합니다.")
     return user
 
-# --- API 엔드포인트들 먼저 정의 ---
+# --- API 엔드포인트들 ---
 
 # 헬스체크 엔드포인트
 @app.get("/health")
@@ -181,7 +202,7 @@ async def get_problems(user: dict = Depends(get_current_user)):
     problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
     return [{"problem_id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}"), "max_score": p.get('max_score', 100)} for p in problems]
 
-# 개별 문제 API - 수정된 버전
+# 개별 문제 API
 @app.get("/api/problems/{problem_id}")
 async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     qid = int(problem_id[1:]) if problem_id.startswith('q') else None
@@ -203,9 +224,9 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     return {
         "problem_id": problem_id,
         "title": problem.get('title', f"문제 {qid}"),
-        "description": problem.get('Question Description', ''),  # 실제 MongoDB 컬럼명 사용
-        "code": processed_code,  # 하이라이팅 처리된 코드
-        "raw_code": raw_code,  # 원본 코드도 함께 전송 (필요시 사용)
+        "description": problem.get('Question Description', ''),
+        "code": processed_code,
+        "raw_code": raw_code,
         "highlight_start": highlight_start,
         "highlight_end": highlight_end,
         "max_score": problem.get('max_score', 100)
@@ -232,9 +253,10 @@ async def submit_answer(submission: SubmissionRequest, user: dict = Depends(get_
     )
     return {"message": "답안이 성공적으로 제출되었습니다."}
 
-# 교사용 API들
+# 교사용 API들 - 수정된 버전
 @app.get("/api/teacher/statistics")
 async def get_teacher_statistics(_: dict = Depends(get_current_teacher)):
+    # IsTeacher가 0인 모든 사용자 (일반 학생 + 테스트 계정)
     students_count = await db[USERS_COLLECTION].count_documents({"IsTeacher": 0})
     submitted_students_count = len(await db[SUBMISSIONS_COLLECTION].distinct("user_id"))
     rate = (submitted_students_count / students_count * 100) if students_count > 0 else 0
@@ -246,60 +268,103 @@ async def get_teacher_classes(_: dict = Depends(get_current_teacher)):
     submissions = await db[SUBMISSIONS_COLLECTION].find({}).to_list(None)
     
     class_data = defaultdict(lambda: {"total": 0, "submitted_ids": set()})
+    
+    # 모든 학생을 반별로 분류 (테스트 계정 포함)
     for s in students:
         pid = parse_student_id(s['ID'])
-        if pid: class_data[f"{pid['grade']}-{pid['class']}"]["total"] += 1
+        if pid:  # 유효한 ID 형식인 경우
+            # 25학년은 제외하고, 나머지는 모두 1학년으로 표시
+            if pid['grade'] == 25:
+                continue  # 25학년은 제외
+            class_key = f"1-{pid['class']}"  # 모든 학년을 1학년으로 표시
+            class_data[class_key]["total"] += 1
 
+    # 제출 내역을 반별로 분류
     for sub in submissions:
         pid = parse_student_id(sub['user_id'])
-        if pid: class_data[f"{pid['grade']}-{pid['class']}"]["submitted_ids"].add(sub['user_id'])
+        if pid:  # 유효한 ID 형식인 경우
+            # 25학년은 제외하고, 나머지는 모두 1학년으로 표시
+            if pid['grade'] == 25:
+                continue  # 25학년은 제외
+            class_key = f"1-{pid['class']}"  # 모든 학년을 1학년으로 표시
+            class_data[class_key]["submitted_ids"].add(sub['user_id'])
 
-    return sorted([
-        {"class_id": cid, "class_name": f"{cid.split('-')[0]}학년 {cid.split('-')[1]}반",
+    # 반별로 정렬 (1반부터 13반까지 오름차순)
+    sorted_classes = sorted([
+        {"class_id": cid, "class_name": f"1학년 {cid.split('-')[1]}반",
          "total_students": data['total'], "submitted_students": len(data['submitted_ids']),
          "submission_rate": round(len(data['submitted_ids']) / data['total'] * 100, 2) if data['total'] > 0 else 0}
         for cid, data in class_data.items()
-    ], key=lambda x: x['class_id'])
+    ], key=lambda x: int(x['class_id'].split('-')[1]))  # 반 번호로 정렬
+    
+    return sorted_classes
 
 @app.get("/api/teacher/class/{class_id}")
 async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher)):
     try:
-        grade, class_num = map(int, class_id.split('-'))
-        id_start, id_end = int(f"{grade:02d}{class_num:02d}00"), int(f"{grade:02d}{class_num:02d}99")
+        # class_id는 "1-XX" 형태이지만 실제 DB는 다른 학년일 수 있음
+        grade_display, class_num = map(int, class_id.split('-'))
+        
+        # 실제 DB에서는 여러 학년의 해당 반을 모두 조회 (25학년 제외)
+        # 예: 1-01 요청시 -> 01반, 02반, 03반, ... 24반의 01반을 모두 조회
+        students = []
+        for grade in range(1, 25):  # 1학년부터 24학년까지 (25학년 제외)
+            id_start = int(f"{grade:02d}{class_num:02d}00")
+            id_end = int(f"{grade:02d}{class_num:02d}99")
+            
+            grade_students = await db[USERS_COLLECTION].find({
+                "IsTeacher": 0, 
+                "ID": {"$gte": id_start, "$lte": id_end}
+            }).to_list(None)
+            
+            students.extend(grade_students)
+            
     except ValueError:
         raise HTTPException(status_code=400, detail="잘못된 반 ID 형식입니다.")
 
-    students = await db[USERS_COLLECTION].find({"IsTeacher": 0, "ID": {"$gt": id_start, "$lt": id_end}}).to_list(None)
     student_ids = [s['ID'] for s in students]
     
     submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": {"$in": student_ids}}).to_list(None)
     problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
 
     subs_by_student = defaultdict(dict)
-    for sub in submissions: subs_by_student[sub['user_id']][sub['problem_id']] = sub
+    for sub in submissions: 
+        subs_by_student[sub['user_id']][sub['problem_id']] = sub
 
-    student_details = [{
-        "id": s['ID'], "name": s.get("Name", f"학생 {s.get('Hash_ID')}"), "number": parse_student_id(s['ID']).get('number'),
-        "submissions": {f"q{p['Question_id']}": subs_by_student[s['ID']].get(f"q{p['Question_id']}", {}) for p in problems}
-    } for s in students]
+    student_details = []
+    for s in students:
+        pid = parse_student_id(s['ID'])
+        if pid:
+            # 테스트 계정인 경우 특별 표시
+            display_name = s.get("Name", f"학생 {s.get('Hash_ID')}")
+            if pid.get('is_test_account', False):
+                display_name += " (테스트)"
+                
+            student_details.append({
+                "id": s['ID'], 
+                "name": display_name, 
+                "number": pid['number'],
+                "is_test_account": pid.get('is_test_account', False),
+                "submissions": {f"q{p['Question_id']}": subs_by_student[s['ID']].get(f"q{p['Question_id']}", {}) for p in problems}
+            })
 
     return {
-        "class_name": f"{grade}학년 {class_num}반",
-        "students": sorted(student_details, key=lambda x: x['number']),
+        "class_name": f"1학년 {class_num}반",  # 항상 1학년으로 표시
+        "students": sorted(student_details, key=lambda x: (x['is_test_account'], x['number'])),
         "problems": [{"id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}")} for p in problems]
     }
 
-# --- 정적 파일 및 페이지 라우팅 (수정됨) ---
+# --- 정적 파일 및 페이지 라우팅 ---
 
 # 정적 파일 먼저 마운트
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
-# 특정 HTML 페이지 라우팅 (수정된 경로들)
+# 특정 HTML 페이지 라우팅
 @app.get("/")
 async def root(): 
     return create_no_cache_file_response("static/login.html")
 
-# 학생용 페이지들 (수정된 라우팅)
+# 학생용 페이지들
 @app.get("/tutorial0")
 async def tutorial0(): 
     return create_no_cache_file_response("static/Tutorial0.html")
@@ -308,7 +373,7 @@ async def tutorial0():
 async def tutorial1(): 
     return create_no_cache_file_response("static/Tutorial1.html")
 
-@app.get("/tutorial1.5")  # 수정: tutorial1_5 -> tutorial1.5
+@app.get("/tutorial1.5")
 async def tutorial1_5(): 
     return create_no_cache_file_response("static/Tutorial1_5.html")
 
@@ -333,7 +398,7 @@ async def teacher_dashboard():
 async def teacher_class(class_id: str): 
     return create_no_cache_file_response("static/teacher_class.html")
 
-# 서버 시작 부분 추가
+# 서버 시작
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
