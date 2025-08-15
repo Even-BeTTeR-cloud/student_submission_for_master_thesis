@@ -8,18 +8,34 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 import jwt
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Optional
+from typing import Optional, Any, Dict, List, Union
 from contextlib import asynccontextmanager
 from collections import defaultdict
 import os
+from bson import ObjectId
 
-# MongoDB ObjectId를 문자열로 변환하는 함수
-def serialize_doc(doc):
-    if doc is None: return None
-    if isinstance(doc, list): return [serialize_doc(item) for item in doc]
-    if isinstance(doc, dict):
-        return {k: serialize_doc(v) for k, v in doc.items() if k != "_id"}
-    return doc
+# MongoDB ObjectId를 안전하게 처리하는 함수
+def serialize_doc(doc: Any) -> Any:
+    """MongoDB 문서를 JSON 직렬화 가능한 형태로 변환"""
+    if doc is None:
+        return None
+    elif isinstance(doc, list):
+        return [serialize_doc(item) for item in doc]
+    elif isinstance(doc, dict):
+        result = {}
+        for key, value in doc.items():
+            if key == "_id":
+                continue  # _id 필드는 제외
+            else:
+                result[key] = serialize_doc(value)
+        return result
+    elif isinstance(doc, ObjectId):
+        return str(doc)  # ObjectId를 문자열로 변환
+    elif isinstance(doc, datetime):
+        return doc.isoformat()  # datetime을 ISO 형식 문자열로 변환
+    else:
+        # 기본 타입 (str, int, float, bool 등)은 그대로 반환
+        return doc
 
 # 설정 - 환경변수 사용
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb+srv://mingyu4796:qwert12345@cluster0.nnr0q.mongodb.net/")
@@ -80,18 +96,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def create_no_cache_file_response(file_path: str) -> FileResponse:
     return FileResponse(file_path, headers={"Cache-Control": "no-cache, no-store", "Pragma": "no-cache", "Expires": "0"})
 
-# 수정된 parse_student_id 함수 - 더 안전한 예외 처리
 def parse_student_id(student_id) -> dict:
     try:
-        # student_id가 다양한 타입일 수 있으므로 문자열로 변환
         s = str(student_id)
-        
         if len(s) == 6 and s.isdigit():
             grade = int(s[:2])
             class_num = int(s[2:4])
             number = int(s[4:])
             
-            # 끝자리가 00인 경우 테스트 계정으로 처리
             if number == 0:
                 return {
                     "grade": grade, 
@@ -115,40 +127,29 @@ def parse_student_id(student_id) -> dict:
 
 # 코드 하이라이팅 처리 함수
 def process_code_highlighting(code: str, highlight_start: Optional[int], highlight_end: Optional[int]) -> str:
-    """
-    코드에서 지정된 라인 범위를 하이라이팅하여 HTML로 반환
-    """
     if not code:
         return ""
     
     lines = code.split('\n')
     
-    # 하이라이팅 범위가 지정되지 않은 경우 원본 반환
     if highlight_start is None or highlight_end is None:
         return '\n'.join(f'<span class="code-line">{line}</span>' for line in lines)
     
-    # 1-based index를 0-based로 변환하고 범위 검증
     start_idx = max(0, highlight_start - 1)
     end_idx = min(len(lines) - 1, highlight_end - 1)
     
     result_lines = []
     for i, line in enumerate(lines):
         if start_idx <= i <= end_idx:
-            # 하이라이팅 구간
             if i == start_idx and i == end_idx:
-                # 단일 라인 하이라이팅
                 result_lines.append(f'<div class="highlighted-section"><span class="code-line">{line}</span></div>')
             elif i == start_idx:
-                # 하이라이팅 시작
                 result_lines.append(f'<div class="highlighted-section"><span class="code-line">{line}</span>')
             elif i == end_idx:
-                # 하이라이팅 끝
                 result_lines.append(f'<span class="code-line">{line}</span></div>')
             else:
-                # 하이라이팅 중간
                 result_lines.append(f'<span class="code-line">{line}</span>')
         else:
-            # 일반 라인
             result_lines.append(f'<span class="code-line">{line}</span>')
     
     return '\n'.join(result_lines)
@@ -221,12 +222,10 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
     if not problem:
         raise HTTPException(status_code=404, detail="문제를 찾을 수 없습니다.")
     
-    # MongoDB 컬럼명에 맞게 수정
     raw_code = problem.get('Code', '')
     highlight_start = problem.get('Highlight_Start_Line')
     highlight_end = problem.get('Highlight_End_Line')
     
-    # 코드 하이라이팅 처리
     processed_code = process_code_highlighting(raw_code, highlight_start, highlight_end)
     
     return {
@@ -240,11 +239,11 @@ async def get_problem(problem_id: str, user: dict = Depends(get_current_user)):
         "max_score": problem.get('max_score', 100)
     }
 
-# 내 제출 내역 API
+# 내 제출 내역 API - serialize_doc 적용
 @app.get("/api/my-submissions")
 async def get_my_submissions(user: dict = Depends(get_current_user)):
-    submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": user["ID"]}).to_list(None)
-    return [serialize_doc(sub) for sub in submissions]
+    submissions_raw = await db[SUBMISSIONS_COLLECTION].find({"user_id": user["ID"]}).to_list(None)
+    return [serialize_doc(sub) for sub in submissions_raw]
 
 # 답안 제출 API
 @app.post("/api/submit")
@@ -261,10 +260,9 @@ async def submit_answer(submission: SubmissionRequest, user: dict = Depends(get_
     )
     return {"message": "답안이 성공적으로 제출되었습니다."}
 
-# 교사용 API들 - 수정된 버전
+# 교사용 API들
 @app.get("/api/teacher/statistics")
 async def get_teacher_statistics(_: dict = Depends(get_current_teacher)):
-    # IsTeacher가 0인 모든 사용자 (일반 학생 + 테스트 계정)
     students_count = await db[USERS_COLLECTION].count_documents({"IsTeacher": 0})
     submitted_students_count = len(await db[SUBMISSIONS_COLLECTION].distinct("user_id"))
     rate = (submitted_students_count / students_count * 100) if students_count > 0 else 0
@@ -272,42 +270,40 @@ async def get_teacher_statistics(_: dict = Depends(get_current_teacher)):
 
 @app.get("/api/teacher/classes")
 async def get_teacher_classes(_: dict = Depends(get_current_teacher)):
-    students = await db[USERS_COLLECTION].find({"IsTeacher": 0}).to_list(None)
-    submissions = await db[SUBMISSIONS_COLLECTION].find({}).to_list(None)
+    students_raw = await db[USERS_COLLECTION].find({"IsTeacher": 0}).to_list(None)
+    submissions_raw = await db[SUBMISSIONS_COLLECTION].find({}).to_list(None)
     
-    print(f"총 학생 수: {len(students)}")  # 디버깅용
+    # serialize_doc 적용
+    students = [serialize_doc(s) for s in students_raw]
+    submissions = [serialize_doc(s) for s in submissions_raw]
+    
+    print(f"총 학생 수: {len(students)}")
     
     class_data = defaultdict(lambda: {"total": 0, "submitted_ids": set()})
     
-    # 모든 학생을 반별로 분류 (테스트 계정 포함)
     for s in students:
         pid = parse_student_id(s['ID'])
-        if pid:  # 유효한 ID 형식인 경우
-            print(f"학생 ID: {s['ID']}, 파싱 결과: {pid}")  # 디버깅용
-            
-            # 모든 학년을 1학년으로 표시 (25학년 포함)
+        if pid:
+            print(f"학생 ID: {s['ID']}, 파싱 결과: {pid}")
             class_key = f"1-{pid['class']}"
             class_data[class_key]["total"] += 1
 
-    # 제출 내역을 반별로 분류
     for sub in submissions:
         pid = parse_student_id(sub['user_id'])
-        if pid:  # 유효한 ID 형식인 경우
-            # 모든 학년을 1학년으로 표시 (25학년 포함)
+        if pid:
             class_key = f"1-{pid['class']}"
             class_data[class_key]["submitted_ids"].add(sub['user_id'])
 
-    print(f"반별 데이터: {dict(class_data)}")  # 디버깅용
+    print(f"반별 데이터: {dict(class_data)}")
 
-    # 반별로 정렬 (1반부터 오름차순)
     sorted_classes = sorted([
         {"class_id": cid, "class_name": f"1학년 {cid.split('-')[1]}반",
          "total_students": data['total'], "submitted_students": len(data['submitted_ids']),
          "submission_rate": round(len(data['submitted_ids']) / data['total'] * 100, 2) if data['total'] > 0 else 0}
-        for cid, data in class_data.items() if data['total'] > 0  # 학생이 있는 반만 포함
-    ], key=lambda x: int(x['class_id'].split('-')[1]))  # 반 번호로 정렬
+        for cid, data in class_data.items() if data['total'] > 0
+    ], key=lambda x: int(x['class_id'].split('-')[1]))
     
-    print(f"정렬된 반 목록: {sorted_classes}")  # 디버깅용
+    print(f"정렬된 반 목록: {sorted_classes}")
     return sorted_classes
 
 @app.get("/api/teacher/class/{class_id}")
@@ -315,14 +311,11 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
     try:
         print(f"=== 반 상세 조회 시작: {class_id} ===")
         
-        # class_id는 "1-XX" 형태
         grade_display, class_num = map(int, class_id.split('-'))
         print(f"요청된 반: {grade_display}학년 {class_num}반")
         
-        # 실제 DB에서는 모든 학년의 해당 반을 조회
-        students = []
+        students_raw = []
         
-        # 더 넓은 범위로 검색 (1학년부터 30학년까지)
         for grade in range(1, 31):
             id_start = int(f"{grade:02d}{class_num:02d}00")
             id_end = int(f"{grade:02d}{class_num:02d}99")
@@ -335,7 +328,7 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
                 
                 if grade_students:
                     print(f"{grade:02d}학년 {class_num}반: {len(grade_students)}명")
-                    students.extend(grade_students)
+                    students_raw.extend(grade_students)
                     
             except Exception as e:
                 print(f"ERROR querying grade {grade}: {e}")
@@ -348,35 +341,37 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
         print(f"ERROR in class details setup: {e}")
         raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
+    # serialize_doc 적용
+    students = [serialize_doc(s) for s in students_raw]
     print(f"총 찾은 학생 수: {len(students)}")
 
     try:
-        # 제출 내역과 문제 목록 조회
         student_ids = [s['ID'] for s in students]
         print(f"학생 ID 목록: {student_ids[:5]}..." if len(student_ids) > 5 else f"학생 ID 목록: {student_ids}")
         
-        submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": {"$in": student_ids}}).to_list(None)
-        problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
+        submissions_raw = await db[SUBMISSIONS_COLLECTION].find({"user_id": {"$in": student_ids}}).to_list(None)
+        problems_raw = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
+        
+        # serialize_doc 적용
+        submissions = [serialize_doc(s) for s in submissions_raw]
+        problems = [serialize_doc(p) for p in problems_raw]
         
         print(f"제출 내역: {len(submissions)}개")
         print(f"문제 목록: {len(problems)}개")
 
-        # 제출 내역을 학생별로 그룹화
         subs_by_student = defaultdict(dict)
-        for sub in submissions: 
+        for sub in submissions:
             try:
                 subs_by_student[sub['user_id']][sub['problem_id']] = sub
             except Exception as e:
-                print(f"ERROR processing submission {sub.get('_id', 'unknown')}: {e}")
+                print(f"ERROR processing submission: {e}")
                 continue
 
-        # 학생 정보 처리
         student_details = []
         for s in students:
             try:
                 pid = parse_student_id(s['ID'])
-                if pid:  # 유효한 파싱 결과가 있는 경우만
-                    # 테스트 계정인 경우 특별 표시
+                if pid:
                     display_name = s.get("Name", f"학생 {s.get('Hash_ID', s['ID'])}")
                     if pid.get('is_test_account', False):
                         display_name += " (테스트)"
@@ -401,7 +396,6 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
 
         print(f"처리된 학생 수: {len(student_details)}")
 
-        # 결과 반환
         result = {
             "class_name": f"1학년 {class_num}반",
             "students": sorted(student_details, key=lambda x: (x['is_test_account'], x['number'])),
@@ -420,15 +414,12 @@ async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher
 
 # --- 정적 파일 및 페이지 라우팅 ---
 
-# 정적 파일 먼저 마운트
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
-# 특정 HTML 페이지 라우팅
 @app.get("/")
 async def root(): 
     return create_no_cache_file_response("static/login.html")
 
-# 학생용 페이지들
 @app.get("/tutorial0")
 async def tutorial0(): 
     return create_no_cache_file_response("static/Tutorial0.html")
@@ -453,7 +444,6 @@ async def problems():
 async def problem_page(problem_id: str): 
     return create_no_cache_file_response("static/problem.html")
 
-# 교사용 페이지들
 @app.get("/teacher/dashboard")
 async def teacher_dashboard(): 
     return create_no_cache_file_response("static/teacher_dashboard.html")
@@ -462,7 +452,6 @@ async def teacher_dashboard():
 async def teacher_class(class_id: str): 
     return create_no_cache_file_response("static/teacher_class.html")
 
-# 서버 시작
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
