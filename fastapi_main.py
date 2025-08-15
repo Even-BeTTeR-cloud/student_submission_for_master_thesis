@@ -80,30 +80,38 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def create_no_cache_file_response(file_path: str) -> FileResponse:
     return FileResponse(file_path, headers={"Cache-Control": "no-cache, no-store", "Pragma": "no-cache", "Expires": "0"})
 
-# 수정된 parse_student_id 함수 - 테스트 계정(끝자리 00) 지원
-def parse_student_id(student_id: int) -> dict:
-    s = str(student_id)
-    if len(s) == 6:
-        grade = int(s[:2])
-        class_num = int(s[2:4])
-        number = int(s[4:])
+# 수정된 parse_student_id 함수 - 더 안전한 예외 처리
+def parse_student_id(student_id) -> dict:
+    try:
+        # student_id가 다양한 타입일 수 있으므로 문자열로 변환
+        s = str(student_id)
         
-        # 끝자리가 00인 경우 테스트 계정으로 처리
-        if number == 0:
-            return {
-                "grade": grade, 
-                "class": class_num, 
-                "number": 0,  # 테스트 계정은 번호 0
-                "is_test_account": True
-            }
+        if len(s) == 6 and s.isdigit():
+            grade = int(s[:2])
+            class_num = int(s[2:4])
+            number = int(s[4:])
+            
+            # 끝자리가 00인 경우 테스트 계정으로 처리
+            if number == 0:
+                return {
+                    "grade": grade, 
+                    "class": class_num, 
+                    "number": 0,
+                    "is_test_account": True
+                }
+            else:
+                return {
+                    "grade": grade, 
+                    "class": class_num, 
+                    "number": number,
+                    "is_test_account": False
+                }
         else:
-            return {
-                "grade": grade, 
-                "class": class_num, 
-                "number": number,
-                "is_test_account": False
-            }
-    return {}
+            print(f"WARNING: Invalid student ID format: {student_id} (length: {len(s)})")
+            return {}
+    except Exception as e:
+        print(f"ERROR in parse_student_id with ID {student_id}: {e}")
+        return {}
 
 # 코드 하이라이팅 처리 함수
 def process_code_highlighting(code: str, highlight_start: Optional[int], highlight_end: Optional[int]) -> str:
@@ -305,61 +313,110 @@ async def get_teacher_classes(_: dict = Depends(get_current_teacher)):
 @app.get("/api/teacher/class/{class_id}")
 async def get_class_details(class_id: str, _: dict = Depends(get_current_teacher)):
     try:
+        print(f"=== 반 상세 조회 시작: {class_id} ===")
+        
         # class_id는 "1-XX" 형태
         grade_display, class_num = map(int, class_id.split('-'))
+        print(f"요청된 반: {grade_display}학년 {class_num}반")
         
-        # 실제 DB에서는 모든 학년의 해당 반을 조회 (25학년 포함)
+        # 실제 DB에서는 모든 학년의 해당 반을 조회
         students = []
         
         # 더 넓은 범위로 검색 (1학년부터 30학년까지)
-        for grade in range(1, 31):  # 1학년부터 30학년까지
+        for grade in range(1, 31):
             id_start = int(f"{grade:02d}{class_num:02d}00")
             id_end = int(f"{grade:02d}{class_num:02d}99")
             
-            grade_students = await db[USERS_COLLECTION].find({
-                "IsTeacher": 0, 
-                "ID": {"$gte": id_start, "$lte": id_end}
-            }).to_list(None)
-            
-            students.extend(grade_students)
-            
-    except ValueError:
-        raise HTTPException(status_code=400, detail="잘못된 반 ID 형식입니다.")
-
-    print(f"반 {class_id}의 학생 수: {len(students)}")  # 디버깅용
-
-    student_ids = [s['ID'] for s in students]
-    
-    submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": {"$in": student_ids}}).to_list(None)
-    problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
-
-    subs_by_student = defaultdict(dict)
-    for sub in submissions: 
-        subs_by_student[sub['user_id']][sub['problem_id']] = sub
-
-    student_details = []
-    for s in students:
-        pid = parse_student_id(s['ID'])
-        if pid:
-            # 테스트 계정인 경우 특별 표시
-            display_name = s.get("Name", f"학생 {s.get('Hash_ID')}")
-            if pid.get('is_test_account', False):
-                display_name += " (테스트)"
+            try:
+                grade_students = await db[USERS_COLLECTION].find({
+                    "IsTeacher": 0, 
+                    "ID": {"$gte": id_start, "$lte": id_end}
+                }).to_list(None)
                 
-            student_details.append({
-                "id": s['ID'], 
-                "name": display_name, 
-                "number": pid['number'],
-                "is_test_account": pid.get('is_test_account', False),
-                "original_grade": pid['grade'],  # 디버깅용으로 원래 학년 정보 추가
-                "submissions": {f"q{p['Question_id']}": subs_by_student[s['ID']].get(f"q{p['Question_id']}", {}) for p in problems}
-            })
+                if grade_students:
+                    print(f"{grade:02d}학년 {class_num}반: {len(grade_students)}명")
+                    students.extend(grade_students)
+                    
+            except Exception as e:
+                print(f"ERROR querying grade {grade}: {e}")
+                continue
+                
+    except ValueError as e:
+        print(f"ERROR parsing class_id {class_id}: {e}")
+        raise HTTPException(status_code=400, detail="잘못된 반 ID 형식입니다.")
+    except Exception as e:
+        print(f"ERROR in class details setup: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
-    return {
-        "class_name": f"1학년 {class_num}반",  # 항상 1학년으로 표시
-        "students": sorted(student_details, key=lambda x: (x['is_test_account'], x['number'])),
-        "problems": [{"id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}")} for p in problems]
-    }
+    print(f"총 찾은 학생 수: {len(students)}")
+
+    try:
+        # 제출 내역과 문제 목록 조회
+        student_ids = [s['ID'] for s in students]
+        print(f"학생 ID 목록: {student_ids[:5]}..." if len(student_ids) > 5 else f"학생 ID 목록: {student_ids}")
+        
+        submissions = await db[SUBMISSIONS_COLLECTION].find({"user_id": {"$in": student_ids}}).to_list(None)
+        problems = await db[PROBLEMS_COLLECTION].find({}).sort("Question_id", 1).to_list(None)
+        
+        print(f"제출 내역: {len(submissions)}개")
+        print(f"문제 목록: {len(problems)}개")
+
+        # 제출 내역을 학생별로 그룹화
+        subs_by_student = defaultdict(dict)
+        for sub in submissions: 
+            try:
+                subs_by_student[sub['user_id']][sub['problem_id']] = sub
+            except Exception as e:
+                print(f"ERROR processing submission {sub.get('_id', 'unknown')}: {e}")
+                continue
+
+        # 학생 정보 처리
+        student_details = []
+        for s in students:
+            try:
+                pid = parse_student_id(s['ID'])
+                if pid:  # 유효한 파싱 결과가 있는 경우만
+                    # 테스트 계정인 경우 특별 표시
+                    display_name = s.get("Name", f"학생 {s.get('Hash_ID', s['ID'])}")
+                    if pid.get('is_test_account', False):
+                        display_name += " (테스트)"
+                        
+                    student_details.append({
+                        "id": s['ID'], 
+                        "name": display_name, 
+                        "number": pid['number'],
+                        "is_test_account": pid.get('is_test_account', False),
+                        "original_grade": pid['grade'],
+                        "submissions": {
+                            f"q{p['Question_id']}": subs_by_student[s['ID']].get(f"q{p['Question_id']}", {}) 
+                            for p in problems
+                        }
+                    })
+                else:
+                    print(f"WARNING: Could not parse student ID {s['ID']}")
+                    
+            except Exception as e:
+                print(f"ERROR processing student {s.get('ID', 'unknown')}: {e}")
+                continue
+
+        print(f"처리된 학생 수: {len(student_details)}")
+
+        # 결과 반환
+        result = {
+            "class_name": f"1학년 {class_num}반",
+            "students": sorted(student_details, key=lambda x: (x['is_test_account'], x['number'])),
+            "problems": [
+                {"id": f"q{p['Question_id']}", "title": p.get('title', f"문제 {p['Question_id']}")} 
+                for p in problems
+            ]
+        }
+        
+        print(f"=== 반 상세 조회 완료: {len(result['students'])}명, {len(result['problems'])}문제 ===")
+        return result
+        
+    except Exception as e:
+        print(f"ERROR in data processing: {e}")
+        raise HTTPException(status_code=500, detail=f"데이터 처리 오류: {str(e)}")
 
 # --- 정적 파일 및 페이지 라우팅 ---
 
