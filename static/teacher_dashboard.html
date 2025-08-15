@@ -9,110 +9,291 @@
             font-family: "Arial", sans-serif;
             background-color: #f4f7f6;
             color: #333;
+            margin: 0;
+            padding: 0;
         }
+        
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
         }
+        
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
         .header h1 {
             font-size: 28px;
+            margin: 0;
+            color: #2c3e50;
         }
+        
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
+        
         .card {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #3498db;
         }
+        
+        .card.submitted {
+            border-left-color: #27ae60;
+        }
+        
+        .card.rate {
+            border-left-color: #f39c12;
+        }
+        
         .card-title {
             font-size: 16px;
             color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
         }
+        
         .card-value {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
         }
+        
+        .card-subtitle {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
         .class-list-container {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
         .class-list-header {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
         }
+        
         .class-item {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 2fr 1fr 100px 60px 100px;
+            gap: 15px;
             align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: 15px 10px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background-color 0.2s;
         }
+        
+        .class-item:hover {
+            background-color: #f8f9fa;
+        }
+        
         .class-item:last-child {
             border-bottom: none;
         }
+        
         .class-name {
             font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
         }
+        
+        .class-stats {
+            color: #666;
+            font-size: 14px;
+        }
+        
         .class-progress-bar {
             width: 100px;
-            height: 10px;
-            background-color: #e0e0e0;
-            border-radius: 5px;
+            height: 12px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
             overflow: hidden;
         }
+        
         .class-progress {
             height: 100%;
-            background-color: #4caf50;
+            background: linear-gradient(90deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+            transition: width 0.3s ease;
+            border-radius: 6px;
         }
+        
+        .class-rate {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
         .btn-details {
-            padding: 8px 12px;
-            background-color: #667eea;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+        
+        .btn-details:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+        
+        .class-header-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 100px 60px 100px;
+            gap: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .class-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .class-header-row {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 id="welcomeMessage"></h1>
-            <button onclick="logout()">로그아웃</button>
-        </div>
-
-        <div class="summary-cards">
-            <div class="card">
-                <div class="card-title">총 학생 수</div>
-                <div class="card-value" id="totalStudents">...</div>
+            <div>
+                <h1 id="welcomeMessage">교사 대시보드</h1>
             </div>
-            <div class="card">
-                <div class="card-title">제출 학생 수</div>
-                <div class="card-value" id="submittedStudents">...</div>
-            </div>
-            <div class="card">
-                <div class="card-title">전체 제출률</div>
-                <div class="card-value" id="submissionRate">...%</div>
+            <div>
+                <button onclick="loadDashboard()" class="refresh-btn">새로고침</button>
+                <button onclick="logout()" class="logout-btn">로그아웃</button>
             </div>
         </div>
 
-        <div class="class-list-container">
-            <div class="class-list-header">반별 제출 현황</div>
-            <div id="classList"></div>
+        <div id="loadingMessage" class="loading">데이터를 불러오는 중...</div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <div id="dashboardContent" style="display: none;">
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-title">총 학생 수</div>
+                    <div class="card-value" id="totalStudents">0</div>
+                    <div class="card-subtitle">테스트 계정 포함</div>
+                </div>
+                <div class="card submitted">
+                    <div class="card-title">제출 학생 수</div>
+                    <div class="card-value" id="submittedStudents">0</div>
+                    <div class="card-subtitle">답안 제출 완료</div>
+                </div>
+                <div class="card rate">
+                    <div class="card-title">전체 제출률</div>
+                    <div class="card-value" id="submissionRate">0%</div>
+                    <div class="card-subtitle">전체 평균</div>
+                </div>
+            </div>
+
+            <div class="class-list-container">
+                <div class="class-list-header">반별 제출 현황</div>
+                <div class="class-header-row">
+                    <div>반 이름</div>
+                    <div>제출 현황</div>
+                    <div>진행률</div>
+                    <div>비율</div>
+                    <div>관리</div>
+                </div>
+                <div id="classList"></div>
+            </div>
         </div>
     </div>
 
@@ -121,60 +302,140 @@
 
         function logout() {
             localStorage.clear();
-            window.location.href = '/';
+            sessionStorage.clear();
+            window.location.replace('/');
         }
 
         async function fetchData(url) {
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.status === 401 || response.status === 403) {
-                logout();
+            try {
+                const response = await fetch(url, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401 || response.status === 403) {
+                    logout();
+                    return null;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: 데이터를 불러오는 데 실패했습니다.`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
             }
-            if (!response.ok) {
-                throw new Error('데이터를 불러오는 데 실패했습니다.');
-            }
-            return response.json();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function formatSubmissionRate(rate) {
+            if (rate >= 80) return '🟢';
+            if (rate >= 60) return '🟡';
+            if (rate >= 30) return '🟠';
+            return '🔴';
         }
 
         async function loadDashboard() {
-            document.getElementById('welcomeMessage').textContent = `${localStorage.getItem('user_name')}님, 환영합니다.`;
+            hideError();
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('dashboardContent').style.display = 'none';
+
+            // 사용자 이름 설정
+            const userName = localStorage.getItem('user_name') || '교사';
+            document.getElementById('welcomeMessage').textContent = `${userName}님, 환영합니다.`;
 
             try {
+                // 통계 데이터 로드
                 const stats = await fetchData('/api/teacher/statistics');
-                document.getElementById('totalStudents').textContent = stats.total_students;
-                document.getElementById('submittedStudents').textContent = stats.submitted_students;
+                if (!stats) return;
+
+                document.getElementById('totalStudents').textContent = stats.total_students.toLocaleString();
+                document.getElementById('submittedStudents').textContent = stats.submitted_students.toLocaleString();
                 document.getElementById('submissionRate').textContent = `${stats.submission_rate}%`;
 
+                // 반별 데이터 로드
                 const classes = await fetchData('/api/teacher/classes');
+                if (!classes) return;
+
                 const classListDiv = document.getElementById('classList');
                 classListDiv.innerHTML = '';
-                classes.forEach(cls => {
-                    const classItem = document.createElement('div');
-                    classItem.className = 'class-item';
-                    classItem.innerHTML = `
-                        <div class="class-name">${cls.class_name}</div>
-                        <div>${cls.submitted_students} / ${cls.total_students} 명</div>
-                        <div class="class-progress-bar">
-                            <div class="class-progress" style="width: ${cls.submission_rate}%"></div>
-                        </div>
-                        <div>${cls.submission_rate}%</div>
-                        <a href="/teacher/class/${cls.class_id}" class="btn-details">상세보기</a>
-                    `;
-                    classListDiv.appendChild(classItem);
-                });
+
+                if (classes.length === 0) {
+                    classListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">등록된 반이 없습니다.</div>';
+                } else {
+                    // 반 번호 순으로 정렬 (1반, 2반, ..., 13반)
+                    classes.sort((a, b) => {
+                        const aClass = parseInt(a.class_id.split('-')[1]);
+                        const bClass = parseInt(b.class_id.split('-')[1]);
+                        return aClass - bClass;
+                    });
+                    
+                    classes.forEach(cls => {
+                        const classItem = document.createElement('div');
+                        classItem.className = 'class-item';
+                        
+                        const rateIcon = formatSubmissionRate(cls.submission_rate);
+                        
+                        classItem.innerHTML = `
+                            <div class="class-name">${cls.class_name}</div>
+                            <div class="class-stats">${cls.submitted_students} / ${cls.total_students} 명</div>
+                            <div class="class-progress-bar">
+                                <div class="class-progress" style="width: ${cls.submission_rate}%"></div>
+                            </div>
+                            <div class="class-rate">${rateIcon} ${cls.submission_rate}%</div>
+                            <a href="/teacher/class/${cls.class_id}" class="btn-details">상세보기</a>
+                        `;
+                        classListDiv.appendChild(classItem);
+                    });
+                }
+
+                // 로딩 완료
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
             } catch (error) {
-                console.error(error);
-                alert(error.message);
+                console.error('Dashboard load error:', error);
+                showError(`대시보드를 불러오는 중 오류가 발생했습니다: ${error.message}`);
             }
         }
 
+        // 권한 확인 및 초기화
         document.addEventListener('DOMContentLoaded', () => {
-            if (!token || localStorage.getItem('user_type') !== 'teacher') {
+            if (!token) {
+                alert('로그인이 필요합니다.');
                 logout();
                 return;
             }
+
+            if (localStorage.getItem('user_type') !== 'teacher') {
+                alert('교사 권한이 필요합니다.');
+                logout();
+                return;
+            }
+
             loadDashboard();
+        });
+
+        // 페이지 가시성 변경 시 자동 새로고침
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                loadDashboard();
+            }
         });
     </script>
 </body>
